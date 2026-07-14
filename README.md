@@ -1,7 +1,7 @@
-# Basic Todo App
+# Wildlife Tracker
 
-End-to-end Fabric-authenticated todo CRUD with a Rayfin data model and per-user row-level security.
-A working starter that exercises the full data path — sign in, create todos, toggle them, delete them.
+A Fabric-authenticated wildlife telemetry tracking application built with Rayfin, React, and shadcn/ui.
+Manage animals, captures, collar deployments, GPS telemetry, study areas, species, and field personnel.
 
 ## Getting started
 
