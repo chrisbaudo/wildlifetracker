@@ -1,0 +1,7 @@
+vendor,model,vhf_beacon_mhz,default_fix_interval_hours,battery_life_years
+Lotek,LiteTrack Iridium 150,148.0,5,3
+ATS,G2110E Iridium,148.0,5,3
+Vectronic Aerospace,VERTEX Lite Globalstar,149.0,5,3
+Telonics,TGW-4670-5 GPS/Iridium,148.5,5,7
+Vectronic Aerospace,VERTEX Plus Iridium,149.0,5,4
+Telonics,TGW-4570-5 GPS/Iridium,148.5,5,7

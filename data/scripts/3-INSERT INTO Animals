@@ -1,0 +1,20 @@
+-- Insert Animals
+-- Run after Species and StudyAreas
+
+INSERT INTO Animals (id, animalId, sex, ageClass, estAgeYears, earTagId, currentStatus, mortalityCause, createdAt, user_id, species_id, studyArea_id)
+SELECT 
+  NEWID() AS id,
+  a.animal_id AS animalId,
+  a.sex,
+  a.age_class AS ageClass,
+  a.est_age_years AS estAgeYears,
+  a.ear_tag_id AS earTagId,
+  a.current_status AS currentStatus,
+  a.mortality_cause AS mortalityCause,
+  GETDATE() AS createdAt,
+  'system' AS user_id,
+  sp.id AS species_id,
+  sa.id AS studyArea_id
+FROM staging.animals a
+INNER JOIN Species sp ON sp.commonName = a.species
+INNER JOIN StudyAreas sa ON sa.population = a.population;

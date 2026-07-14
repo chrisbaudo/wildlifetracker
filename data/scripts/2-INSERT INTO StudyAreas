@@ -1,0 +1,16 @@
+-- Insert StudyAreas
+-- Run after Species
+
+INSERT INTO StudyAreas (id, population, gmu, studyArea, centerLat, centerLon, migratory, user_id, primarySpecies_id)
+SELECT 
+  NEWID() AS id,
+  sa.population,
+  sa.gmu,
+  sa.study_area AS studyArea,
+  sa.center_lat AS centerLat,
+  sa.center_lon AS centerLon,
+  sa.migratory,
+  'system' AS user_id,
+  sp.id AS primarySpecies_id
+FROM staging.study_areas sa
+INNER JOIN Species sp ON sp.commonName = sa.species;

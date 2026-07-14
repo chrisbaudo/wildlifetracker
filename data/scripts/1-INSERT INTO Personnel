@@ -1,0 +1,10 @@
+-- Insert Personnel (reference table)
+-- Run this first as it has no dependencies
+
+INSERT INTO Personnel (id, name, role, user_id)
+SELECT 
+  NEWID() AS id,
+  name,
+  role,
+  'system' AS user_id
+FROM staging.personnel;

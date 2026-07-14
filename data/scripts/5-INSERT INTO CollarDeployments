@@ -1,0 +1,26 @@
+-- Insert CollarDeployments
+-- Run after Animals, CollarModel, and Captures
+
+INSERT INTO CollarDeployments (id, collarId, fixIntervalHours, deployDatetime, endDatetime, endReason, user_id, animal_id, collarModel_id)
+SELECT 
+  NEWID() AS id,
+  cd.collar_id AS collarId,
+  cd.fix_interval_hours AS fixIntervalHours,
+  cd.deploy_datetime AS deployDatetime,
+  cd.end_datetime AS endDatetime,
+  cd.end_reason AS endReason,
+  'system' AS user_id,
+  a.id AS animal_id,
+  cm.id AS collarModel_id
+FROM staging.collar_deployments cd
+INNER JOIN Animals a ON a.animalId = cd.animal_id
+INNER JOIN CollarModels cm ON cm.vendor = cd.vendor AND cm.model = cd.model;
+
+-- Update Captures to link to their associated CollarDeployment
+-- Links captures to deployments by matching collar_id from the CSV
+UPDATE cap
+SET cap.collarDeployment_id = cd.id
+FROM Captures cap
+INNER JOIN staging.captures sc ON sc.capture_id = cap.captureId
+INNER JOIN CollarDeployments cd ON cd.collarId = sc.collar_id
+WHERE sc.collar_id IS NOT NULL;

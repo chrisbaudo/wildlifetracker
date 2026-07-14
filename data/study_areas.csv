@@ -1,0 +1,12 @@
+population,species,gmu,study_area,center_lat,center_lon,migratory,n_collared
+Western Arctic Herd,Caribou,23,Northwest Arctic – Noatak / Kotzebue,68.1,-159.4,Y,4
+Nelchina Herd,Caribou,13,Copper River Basin – Glennallen,62.633,-147.067,Y,4
+Fortymile Herd,Caribou,20E,Fortymile River – Taylor Highway,64.433,-142.733,Y,4
+Nelchina Basin Moose,Moose,13,Copper River Basin,62.3,-146.45,N,3
+Tanana Flats Moose,Moose,20A,Interior – Tanana Flats,64.2,-147.65,N,3
+Kenai Peninsula Moose,Moose,15,Kenai Peninsula,60.5,-150.35,N,2
+Alaska Range Sheep,Dall Sheep,20A,Central Alaska Range – Delta Ctrl. Area,63.42,-146.2,N,3
+Brooks Range Sheep,Dall Sheep,24A,Central Brooks Range,67.68,-150.15,N,3
+Alaska Peninsula Brown Bear,Brown Bear,9,Alaska Peninsula,57.55,-156.45,N,3
+Nelchina Brown Bear,Brown Bear,13,Copper River Basin,62.42,-146.9,N,3
+Seward Peninsula Muskox,Muskox,22,Seward Peninsula – Nome,64.9,-164.3,N,6

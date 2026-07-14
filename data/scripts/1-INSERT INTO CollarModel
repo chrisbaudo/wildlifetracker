@@ -1,0 +1,13 @@
+-- Insert CollarModel (reference table)
+-- Run this first as it has no dependencies
+
+INSERT INTO CollarModels (id, vendor, model, vhfBeaconMhz, defaultFixIntervalHours, batteryLifeYears, user_id)
+SELECT 
+  NEWID() AS id,
+  vendor,
+  model,
+  vhf_beacon_mhz AS vhfBeaconMhz,
+  default_fix_interval_hours AS defaultFixIntervalHours,
+  battery_life_years AS batteryLifeYears,
+  'system' AS user_id
+FROM staging.collar_models;

@@ -1,0 +1,21 @@
+-- Insert TelemetryFixes
+-- Run after CollarDeployments
+
+INSERT INTO TelemetryFixes (id, fixId, fixDatetimeUtc, latitude, longitude, altitudeM, fixType, numSatellites, dop, temperatureC, activityIndex, mortalityFlag, user_id, collarDeployment_id)
+SELECT 
+  NEWID() AS id,
+  t.fix_id AS fixId,
+  t.fix_datetime_utc AS fixDatetimeUtc,
+  t.latitude,
+  t.longitude,
+  t.altitude_m AS altitudeM,
+  t.fix_type AS fixType,
+  t.num_satellites AS numSatellites,
+  t.dop,
+  t.temperature_c AS temperatureC,
+  t.activity_index AS activityIndex,
+  t.mortality_flag AS mortalityFlag,
+  'system' AS user_id,
+  cd.id AS collarDeployment_id
+FROM staging.telemetry t
+INNER JOIN CollarDeployments cd ON cd.collarId = t.collar_id;

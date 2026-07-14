@@ -1,0 +1,10 @@
+-- Insert Species (reference table)
+-- Run this first as it has no dependencies
+
+INSERT INTO Species (id, commonName, scientificName, user_id)
+SELECT 
+  NEWID() AS id,
+  common_name AS commonName,
+  scientific_name AS scientificName,
+  'system' AS user_id
+FROM staging.species;

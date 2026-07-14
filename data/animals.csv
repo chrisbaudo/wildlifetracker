@@ -1,0 +1,39 @@
+animal_id,species,scientific_name,sex,age_class,est_age_years,population,gmu,study_area,ear_tag_id,collar_id,current_status,mortality_cause
+CAR-001,Caribou,Rangifer tarandus granti,F,adult,5.2,Western Arctic Herd,23,Northwest Arctic – Noatak / Kotzebue,AK-31105,LOT40596,alive,
+CAR-002,Caribou,Rangifer tarandus granti,F,adult,12.0,Western Arctic Herd,23,Northwest Arctic – Noatak / Kotzebue,AK-36094,ATS59736,mortality,unknown
+CAR-003,Caribou,Rangifer tarandus granti,F,adult,7.2,Western Arctic Herd,23,Northwest Arctic – Noatak / Kotzebue,AK-31770,VEC53387,alive,
+CAR-004,Caribou,Rangifer tarandus granti,F,adult,4.9,Western Arctic Herd,23,Northwest Arctic – Noatak / Kotzebue,AK-56138,TLN47947,alive,
+CAR-005,Caribou,Rangifer tarandus granti,F,adult,5.8,Nelchina Herd,13,Copper River Basin – Glennallen,AK-14129,VEC53391,alive,
+CAR-006,Caribou,Rangifer tarandus granti,F,adult,8.1,Nelchina Herd,13,Copper River Basin – Glennallen,AK-30545,LOT40615,alive,
+CAR-007,Caribou,Rangifer tarandus granti,M,yearling,1.4,Nelchina Herd,13,Copper River Basin – Glennallen,AK-15079,TLN47956,alive,
+CAR-008,Caribou,Rangifer tarandus granti,F,adult,10.6,Nelchina Herd,13,Copper River Basin – Glennallen,AK-62345,TLN47981,alive,
+CAR-009,Caribou,Rangifer tarandus granti,M,adult,4.9,Fortymile Herd,20E,Fortymile River – Taylor Highway,AK-96031,TLN48001,mortality,vehicle collision
+CAR-010,Caribou,Rangifer tarandus granti,F,adult,8.9,Fortymile Herd,20E,Fortymile River – Taylor Highway,AK-28165,TLN48011,alive,
+CAR-011,Caribou,Rangifer tarandus granti,F,adult,10.8,Fortymile Herd,20E,Fortymile River – Taylor Highway,AK-68838,ATS59755,alive,
+CAR-012,Caribou,Rangifer tarandus granti,F,adult,6.9,Fortymile Herd,20E,Fortymile River – Taylor Highway,AK-95504,VEC53409,alive,
+MOO-001,Moose,Alces alces gigas,F,adult,6.2,Nelchina Basin Moose,13,Copper River Basin,AK-64892,ATS59786,alive,
+MOO-002,Moose,Alces alces gigas,F,adult,9.8,Nelchina Basin Moose,13,Copper River Basin,AK-10885,TLN48035,alive,
+MOO-003,Moose,Alces alces gigas,F,adult,5.9,Nelchina Basin Moose,13,Copper River Basin,AK-96686,VEC53413,alive,
+MOO-004,Moose,Alces alces gigas,F,adult,3.4,Tanana Flats Moose,20A,Interior – Tanana Flats,AK-45424,ATS59823,alive,
+MOO-005,Moose,Alces alces gigas,M,yearling,1.4,Tanana Flats Moose,20A,Interior – Tanana Flats,AK-31043,VEC53450,mortality,predation (wolf)
+MOO-006,Moose,Alces alces gigas,M,adult,6.9,Tanana Flats Moose,20A,Interior – Tanana Flats,AK-63349,VEC53488,alive,
+MOO-007,Moose,Alces alces gigas,F,adult,6.2,Kenai Peninsula Moose,15,Kenai Peninsula,AK-77318,VEC53522,mortality,predation (bear)
+MOO-008,Moose,Alces alces gigas,F,adult,6.2,Kenai Peninsula Moose,15,Kenai Peninsula,AK-98664,LOT40629,alive,
+DSH-001,Dall Sheep,Ovis dalli dalli,M,adult,4.7,Alaska Range Sheep,20A,Central Alaska Range – Delta Ctrl. Area,AK-81736,TLN48068,alive,
+DSH-002,Dall Sheep,Ovis dalli dalli,M,yearling,1.3,Alaska Range Sheep,20A,Central Alaska Range – Delta Ctrl. Area,AK-68124,VEC53540,mortality,unknown
+DSH-003,Dall Sheep,Ovis dalli dalli,F,yearling,1.5,Alaska Range Sheep,20A,Central Alaska Range – Delta Ctrl. Area,AK-85114,TLN48079,mortality,unknown
+DSH-004,Dall Sheep,Ovis dalli dalli,F,yearling,1.8,Brooks Range Sheep,24A,Central Brooks Range,AK-14677,ATS59833,mortality,predation (bear)
+DSH-005,Dall Sheep,Ovis dalli dalli,F,yearling,1.7,Brooks Range Sheep,24A,Central Brooks Range,AK-96170,ATS59863,mortality,unknown
+DSH-006,Dall Sheep,Ovis dalli dalli,F,adult,9.5,Brooks Range Sheep,24A,Central Brooks Range,AK-98211,TLN48102,alive,
+BBR-001,Brown Bear,Ursus arctos,F,adult,4.7,Alaska Peninsula Brown Bear,9,Alaska Peninsula,AK-25793,VEC53562,alive,
+BBR-002,Brown Bear,Ursus arctos,M,adult,10.6,Alaska Peninsula Brown Bear,9,Alaska Peninsula,AK-99569,VEC53571,alive,
+BBR-003,Brown Bear,Ursus arctos,M,adult,7.0,Alaska Peninsula Brown Bear,9,Alaska Peninsula,AK-42027,VEC53593,alive,
+BBR-004,Brown Bear,Ursus arctos,M,adult,11.2,Nelchina Brown Bear,13,Copper River Basin,AK-88033,TLN48107,alive,
+BBR-005,Brown Bear,Ursus arctos,M,yearling,1.6,Nelchina Brown Bear,13,Copper River Basin,AK-87604,ATS59886,alive,
+BBR-006,Brown Bear,Ursus arctos,M,adult,9.2,Nelchina Brown Bear,13,Copper River Basin,AK-84511,TLN48136,mortality,natural
+MSK-001,Muskox,Ovibos moschatus,F,yearling,1.8,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-75328,VEC53605,alive,
+MSK-002,Muskox,Ovibos moschatus,F,yearling,1.4,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-93121,TLN48155,alive,
+MSK-003,Muskox,Ovibos moschatus,F,adult,12.2,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-60622,VEC53609,mortality,natural / winterkill
+MSK-004,Muskox,Ovibos moschatus,F,yearling,1.4,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-98181,TLN48175,alive,
+MSK-005,Muskox,Ovibos moschatus,F,adult,11.9,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-33529,VEC53622,alive,
+MSK-006,Muskox,Ovibos moschatus,F,adult,11.9,Seward Peninsula Muskox,22,Seward Peninsula – Nome,AK-46078,TLN48194,alive,

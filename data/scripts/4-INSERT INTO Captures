@@ -1,0 +1,32 @@
+-- Insert Captures
+-- Run after Animals and Personnel
+
+INSERT INTO Captures (id, captureId, captureDatetime, captureLat, captureLon, bodyWeightKg, chestGirthCm, bodyConditionScore, captureMethod, immobilizationDrug, drugDoseMl, inductionMin, handlingTimeMin, bloodSample, fecalSample, hairSample, toothExtracted, notes, user_id, animal_id, biologist_id, pilot_id, collarDeployment_id)
+SELECT 
+  NEWID() AS id,
+  c.capture_id AS captureId,
+  c.capture_datetime AS captureDatetime,
+  c.capture_lat AS captureLat,
+  c.capture_lon AS captureLon,
+  c.body_weight_kg AS bodyWeightKg,
+  c.chest_girth_cm AS chestGirthCm,
+  c.body_condition_score AS bodyConditionScore,
+  c.capture_method AS captureMethod,
+  c.immobilization_drug AS immobilizationDrug,
+  c.drug_dose_ml AS drugDoseMl,
+  c.induction_min AS inductionMin,
+  c.handling_time_min AS handlingTimeMin,
+  CASE WHEN c.blood_sample = 'Y' THEN 1 ELSE 0 END AS bloodSample,
+  CASE WHEN c.fecal_sample = 'Y' THEN 1 ELSE 0 END AS fecalSample,
+  CASE WHEN c.hair_sample = 'Y' THEN 1 ELSE 0 END AS hairSample,
+  CASE WHEN c.tooth_extracted = 'Y' THEN 1 ELSE 0 END AS toothExtracted,
+  c.notes,
+  'system' AS user_id,
+  a.id AS animal_id,
+  pb.id AS biologist_id,
+  pp.id AS pilot_id,
+  NULL AS collarDeployment_id  -- Will be set via UPDATE after CollarDeployments are inserted
+FROM staging.captures c
+INNER JOIN Animals a ON a.animalId = c.animal_id
+INNER JOIN Personnel pb ON pb.name = c.biologist
+INNER JOIN Personnel pp ON pp.name = c.pilot;
