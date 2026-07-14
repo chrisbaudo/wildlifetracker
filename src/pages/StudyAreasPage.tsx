@@ -63,7 +63,7 @@ export function StudyAreasPage() {
     });
   };
 
-  const speciesName = (id: string) => speciesList.find(s => s.id === id)?.commonName ?? id;
+  const speciesName = (id: string | undefined) => id ? (speciesList.find(s => s.id === id)?.commonName ?? '—') : '—';
 
   return (
     <div className="bg-background min-h-screen">

@@ -74,8 +74,8 @@ export function AnimalsPage() {
     });
   };
 
-  const speciesName = (id: string) => speciesList.find(s => s.id === id)?.commonName ?? '—';
-  const studyAreaName = (id: string) => studyAreaList.find(s => s.id === id)?.population ?? '—';
+  const speciesName = (id: string | undefined) => id ? (speciesList.find(s => s.id === id)?.commonName ?? '—') : '—';
+  const studyAreaName = (id: string | undefined) => id ? (studyAreaList.find(s => s.id === id)?.population ?? '—') : '—';
 
   return (
     <div className="bg-background min-h-screen">

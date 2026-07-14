@@ -80,8 +80,10 @@ export function CapturesPage() {
     setForm({ ...rest, captureDatetime: new Date(item.captureDatetime) });
   };
 
-  const animalLabel = (id: string) => animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8);
-  const personnelLabel = (id: string) => personnel.find(p => p.id === id)?.name ?? id.slice(0, 8);
+  const animalLabel = (id: string | undefined) =>
+    id ? (animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8)) : '—';
+  const personnelLabel = (id: string | undefined) =>
+    id ? (personnel.find(p => p.id === id)?.name ?? id.slice(0, 8)) : '—';
   const deploymentLabel = (id?: string) => id ? (deployments.find(d => d.id === id)?.collarId ?? id.slice(0, 8)) : '—';
 
   const sampleFlags = [
