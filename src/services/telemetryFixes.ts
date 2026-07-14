@@ -16,15 +16,39 @@ export interface TelemetryFixItem {
   collarDeployment_id: string;
 }
 
-/** Read-only — no create/update/delete */
-export async function getTelemetryFixes(): Promise<TelemetryFixItem[]> {
-  if (isLocalBackend()) return [];
+const FIELDS = [
+  'id', 'fixId', 'fixDatetimeUtc', 'latitude', 'longitude', 'altitudeM',
+  'fixType', 'numSatellites', 'dop', 'temperatureC', 'activityIndex',
+  'mortalityFlag', 'collarDeployment_id',
+] as never[];
 
+const PAGE_SIZE = 5000;
+
+/** Fetch all fixes for a single collar deployment. */
+export async function getTelemetryFixesByDeployment(deploymentId: string): Promise<TelemetryFixItem[]> {
+  if (isLocalBackend()) return [];
   const client = getRayfinClient();
-  const results = await client.data.TelemetryFixes.select([
-    'id', 'fixId', 'fixDatetimeUtc', 'latitude', 'longitude', 'altitudeM',
-    'fixType', 'numSatellites', 'dop', 'temperatureC', 'activityIndex',
-    'mortalityFlag', 'collarDeployment_id',
-  ] as never[]).orderBy({ fixDatetimeUtc: 'asc' } as never).execute();
-  return results as unknown as TelemetryFixItem[];
+  const all: TelemetryFixItem[] = [];
+
+  let page = await client.data.TelemetryFixes
+    .select(FIELDS)
+    .where({ collarDeployment_id: { eq: deploymentId } } as never)
+    .orderBy({ fixDatetimeUtc: 'asc' } as never)
+    .first(PAGE_SIZE)
+    .executePaginated();
+
+  all.push(...(page.items as unknown as TelemetryFixItem[]));
+
+  while (page.hasNextPage && page.endCursor) {
+    page = await client.data.TelemetryFixes
+      .select(FIELDS)
+      .where({ collarDeployment_id: { eq: deploymentId } } as never)
+      .orderBy({ fixDatetimeUtc: 'asc' } as never)
+      .first(PAGE_SIZE)
+      .after(page.endCursor)
+      .executePaginated();
+    all.push(...(page.items as unknown as TelemetryFixItem[]));
+  }
+
+  return all;
 }

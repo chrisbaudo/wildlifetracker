@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { Pager } from '@/components/ui/pager';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePagination } from '@/hooks/usePagination';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -30,6 +32,7 @@ export function StudyAreasPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { page, setPage, pageItems, pageCount } = usePagination(items);
 
   const fetchItems = useCallback(async () => {
     setError(null);
@@ -159,7 +162,7 @@ export function StudyAreasPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {pageItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.population}</TableCell>
                     <TableCell>{item.studyArea}</TableCell>
@@ -175,6 +178,7 @@ export function StudyAreasPage() {
                 ))}
               </TableBody>
             </Table>
+            <Pager page={page} pageCount={pageCount} onPageChange={setPage} />
           </Card>
         )}
       </main>

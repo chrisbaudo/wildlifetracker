@@ -1,16 +1,39 @@
 ﻿import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Pager } from "@/components/ui/pager";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagination } from "@/hooks/usePagination";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { getAnimals, type AnimalItem } from "@/services/animals";
-import { getCollarModels, type CollarModelItem } from "@/services/collarModels";
 import {
-  getCollarDeployments, type CollarDeploymentItem,
+  createCollarDeployment, deleteCollarDeployment,
+  getCollarDeployments, updateCollarDeployment, type CollarDeploymentItem,
 } from "@/services/collarDeployments";
+import { getCollarModels, type CollarModelItem } from "@/services/collarModels";
+
+const toDateInput = (d: Date | undefined) =>
+  d ? new Date(d).toISOString().slice(0, 10) : "";
+
+const emptyForm = {
+  collarId: "",
+  fixIntervalHours: 4,
+  deployDatetime: toDateInput(new Date()),
+  endDatetime: "",
+  endReason: "",
+  animal_id: "",
+  collarModel_id: "",
+};
 
 export function CollarDeploymentsPage() {
   const [items, setItems] = useState<CollarDeploymentItem[]>([]);
@@ -18,6 +41,9 @@ export function CollarDeploymentsPage() {
   const [collarModels, setCollarModels] = useState<CollarModelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const { page, setPage, pageItems, pageCount } = usePagination(items);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -37,6 +63,40 @@ export function CollarDeploymentsPage() {
 
   useEffect(() => { void fetchAll(); }, [fetchAll]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const data: Omit<CollarDeploymentItem, "id"> = {
+      collarId: form.collarId,
+      fixIntervalHours: Number(form.fixIntervalHours),
+      deployDatetime: new Date(form.deployDatetime),
+      endDatetime: form.endDatetime ? new Date(form.endDatetime) : undefined,
+      endReason: form.endReason || undefined,
+      animal_id: form.animal_id,
+      collarModel_id: form.collarModel_id,
+    };
+    if (editingId) {
+      await updateCollarDeployment(editingId, data);
+      setEditingId(null);
+    } else {
+      await createCollarDeployment(data);
+    }
+    setForm(emptyForm);
+    await fetchAll();
+  };
+
+  const handleEdit = (item: CollarDeploymentItem) => {
+    setEditingId(item.id);
+    setForm({
+      collarId: item.collarId,
+      fixIntervalHours: item.fixIntervalHours,
+      deployDatetime: toDateInput(item.deployDatetime),
+      endDatetime: toDateInput(item.endDatetime),
+      endReason: item.endReason ?? "",
+      animal_id: item.animal_id,
+      collarModel_id: item.collarModel_id,
+    });
+  };
+
   const animalLabel = (id: string | undefined) =>
     id ? (animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8)) : "—";
   const modelLabel = (id: string | undefined) => {
@@ -48,10 +108,7 @@ export function CollarDeploymentsPage() {
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Collar Deployments</h1>
-          <Badge variant="outline" className="text-muted-foreground">Read-only</Badge>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-8">Collar Deployments</h1>
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
@@ -59,12 +116,80 @@ export function CollarDeploymentsPage() {
           </div>
         )}
 
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>{editingId ? "Edit Deployment" : "Add Deployment"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Collar ID</Label>
+                  <Input required placeholder="e.g. COL-001" value={form.collarId}
+                    onChange={(e) => setForm({ ...form, collarId: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Fix Interval (hours)</Label>
+                  <Input required type="number" min={1} value={form.fixIntervalHours}
+                    onChange={(e) => setForm({ ...form, fixIntervalHours: Number(e.target.value) })} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Animal</Label>
+                  <Select value={form.animal_id} onValueChange={(v) => setForm({ ...form, animal_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select animal" /></SelectTrigger>
+                    <SelectContent>
+                      {animals.map(a => <SelectItem key={a.id} value={a.id}>{a.animalId}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Collar Model</Label>
+                  <Select value={form.collarModel_id} onValueChange={(v) => setForm({ ...form, collarModel_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger>
+                    <SelectContent>
+                      {collarModels.map(m => <SelectItem key={m.id} value={m.id}>{m.vendor} {m.model}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Deploy Date</Label>
+                  <Input required type="date" value={form.deployDatetime}
+                    onChange={(e) => setForm({ ...form, deployDatetime: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <Label>End Date <span className="text-muted-foreground">(optional)</span></Label>
+                  <Input type="date" value={form.endDatetime}
+                    onChange={(e) => setForm({ ...form, endDatetime: e.target.value })} />
+                </div>
+                {form.endDatetime && (
+                  <div className="space-y-1 col-span-2">
+                    <Label>End Reason <span className="text-muted-foreground">(optional)</span></Label>
+                    <Input placeholder="e.g. collar drop-off" value={form.endReason}
+                      onChange={(e) => setForm({ ...form, endReason: e.target.value })} />
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button type="submit">{editingId ? "Save Changes" : "Add Deployment"}</Button>
+                {editingId && (
+                  <Button type="button" variant="outline"
+                    onClick={() => { setEditingId(null); setForm(emptyForm); }}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Separator className="my-8" />
+
         {loading ? (
           <Card>
             <Table>
               <TableHeader>
                 <TableRow>
-                  {["Collar ID","Animal","Model","Fix Interval (h)","Deploy Date","End Date","Status"].map(h => (
+                  {["Collar ID", "Animal", "Model", "Fix Interval (h)", "Deploy Date", "End Date", "Status", ""].map(h => (
                     <TableHead key={h}>{h}</TableHead>
                   ))}
                 </TableRow>
@@ -72,7 +197,7 @@ export function CollarDeploymentsPage() {
               <TableBody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 7 }).map((_, j) => (
+                    {Array.from({ length: 8 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
@@ -94,10 +219,11 @@ export function CollarDeploymentsPage() {
                   <TableHead>Deploy Date</TableHead>
                   <TableHead>End Date</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => {
+                {pageItems.map((item) => {
                   const active = !item.endDatetime;
                   return (
                     <TableRow key={item.id}>
@@ -116,11 +242,17 @@ export function CollarDeploymentsPage() {
                           ? <Badge variant="default">Active</Badge>
                           : <Badge variant="outline">{item.endReason ?? "Ended"}</Badge>}
                       </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
+                          onClick={() => void deleteCollarDeployment(item.id).then(fetchAll)}>Delete</Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
+            <Pager page={page} pageCount={pageCount} onPageChange={setPage} />
           </Card>
         )}
       </main>

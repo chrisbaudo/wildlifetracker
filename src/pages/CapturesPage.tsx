@@ -9,8 +9,10 @@ import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { Pager } from '@/components/ui/pager';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePagination } from '@/hooks/usePagination';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -46,6 +48,7 @@ export function CapturesPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<CaptureItem, 'id'>>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { page, setPage, pageItems, pageCount } = usePagination(items);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -300,7 +303,7 @@ export function CapturesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {pageItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-mono text-sm font-medium">{item.captureId}</TableCell>
                     <TableCell><Badge variant="secondary">{animalLabel(item.animal_id)}</Badge></TableCell>
@@ -330,6 +333,7 @@ export function CapturesPage() {
                 ))}
               </TableBody>
             </Table>
+            <Pager page={page} pageCount={pageCount} onPageChange={setPage} />
           </Card>
         )}
       </main>

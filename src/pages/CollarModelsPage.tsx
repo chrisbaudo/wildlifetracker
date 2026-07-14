@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Pager } from '@/components/ui/pager';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePagination } from '@/hooks/usePagination';
 import {
   Table,
   TableBody,
@@ -42,6 +44,7 @@ export function CollarModelsPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { page, setPage, pageItems, pageCount } = usePagination(items);
 
   const fetchItems = useCallback(async () => {
     const data = await getCollarModels();
@@ -192,7 +195,7 @@ export function CollarModelsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {pageItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       <Badge variant="secondary">{item.vendor}</Badge>
@@ -211,6 +214,7 @@ export function CollarModelsPage() {
                 ))}
               </TableBody>
             </Table>
+            <Pager page={page} pageCount={pageCount} onPageChange={setPage} />
           </Card>
         )}
       </main>
