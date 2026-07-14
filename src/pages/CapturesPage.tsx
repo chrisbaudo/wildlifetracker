@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDelete } from '@/components/ui/confirm-delete';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Pager } from '@/components/ui/pager';
-import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -48,7 +51,10 @@ export function CapturesPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<CaptureItem, 'id'>>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const { page, setPage, pageItems, pageCount } = usePagination(items);
+  const [saving, setSaving] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { search, setSearch, filtered } = useSearch(items);
+  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -71,16 +77,36 @@ export function CapturesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) { await updateCapture(editingId, form); setEditingId(null); }
-    else { await createCapture(form); }
-    setForm(emptyForm);
-    await fetchAll();
+    setSaving(true);
+    try {
+      if (editingId) { await updateCapture(editingId, form); setEditingId(null); }
+      else { await createCapture(form); }
+      setForm(emptyForm);
+      await fetchAll();
+      setSheetOpen(false);
+      toast.success('Capture saved.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (item: CaptureItem) => {
     setEditingId(item.id);
     const { id: _id, ...rest } = item;
     setForm({ ...rest, captureDatetime: new Date(item.captureDatetime) });
+    setSheetOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCapture(id);
+      await fetchAll();
+      toast.success('Capture deleted.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete.');
+    }
   };
 
   const animalLabel = (id: string | undefined) =>
@@ -99,7 +125,10 @@ export function CapturesPage() {
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Captures</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Captures</h1>
+          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Capture</Button>
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
@@ -107,15 +136,15 @@ export function CapturesPage() {
           </div>
         )}
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{editingId ? 'Edit Capture' : 'Log Capture'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{editingId ? 'Edit Capture' : 'Log Capture'}</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6 mt-4">
               {/* Identity & Location */}
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Identity & Location</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Identity &amp; Location</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label>Capture ID</Label>
@@ -266,16 +295,16 @@ export function CapturesPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button type="submit">{editingId ? 'Save Changes' : 'Log Capture'}</Button>
-                {editingId && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingId(null); setForm(emptyForm); }}>Cancel</Button>
-                )}
+                <Button type="submit" disabled={saving}>{saving ? 'Saving…' : (editingId ? 'Save Changes' : 'Add Capture')}</Button>
+                <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>Cancel</Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </SheetContent>
+        </Sheet>
 
-        <Separator className="my-8" />
+        <div className="mb-4">
+          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-xs" />
+        </div>
 
         {loading ? (
           <Card><Table><TableHeader><TableRow>
@@ -284,8 +313,8 @@ export function CapturesPage() {
           <TableBody>{Array.from({length:4}).map((_,i) => <TableRow key={i}>
             {Array.from({length:9}).map((_,j) => <TableCell key={j}><Skeleton className="h-4 w-full"/></TableCell>)}
           </TableRow>)}</TableBody></Table></Card>
-        ) : items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-10">No captures logged yet.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{search ? 'No results match your search.' : 'No captures logged yet.'}</p>
         ) : (
           <Card>
             <Table>
@@ -326,8 +355,7 @@ export function CapturesPage() {
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>Edit</Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
-                        onClick={() => void deleteCapture(item.id).then(fetchAll)}>Delete</Button>
+                      <ConfirmDelete label="capture" onConfirm={() => void handleDelete(item.id)} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -340,3 +368,4 @@ export function CapturesPage() {
     </div>
   );
 }
+

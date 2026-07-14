@@ -1,26 +1,29 @@
-﻿import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from 'react';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ConfirmDelete } from '@/components/ui/confirm-delete';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Pager } from "@/components/ui/pager";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { usePagination } from "@/hooks/usePagination";
+} from '@/components/ui/select';
+import { Pager } from '@/components/ui/pager';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePagination } from '@/hooks/usePagination';
+import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { getAnimals, type AnimalItem } from "@/services/animals";
+} from '@/components/ui/table';
+import { getAnimals, type AnimalItem } from '@/services/animals';
 import {
   createCollarDeployment, deleteCollarDeployment,
   getCollarDeployments, updateCollarDeployment, type CollarDeploymentItem,
-} from "@/services/collarDeployments";
-import { getCollarModels, type CollarModelItem } from "@/services/collarModels";
+} from '@/services/collarDeployments';
+import { getCollarModels, type CollarModelItem } from '@/services/collarModels';
 
 const toDateInput = (d: Date | undefined) =>
   d ? new Date(d).toISOString().slice(0, 10) : "";
@@ -43,7 +46,10 @@ export function CollarDeploymentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const { page, setPage, pageItems, pageCount } = usePagination(items);
+  const [saving, setSaving] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { search, setSearch, filtered } = useSearch(items);
+  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -55,7 +61,7 @@ export function CollarDeploymentsPage() {
       setAnimals(anims);
       setCollarModels(cms);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data.");
+      setError(err instanceof Error ? err.message : 'Failed to load data.');
     } finally {
       setLoading(false);
     }
@@ -65,23 +71,32 @@ export function CollarDeploymentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data: Omit<CollarDeploymentItem, "id"> = {
-      collarId: form.collarId,
-      fixIntervalHours: Number(form.fixIntervalHours),
-      deployDatetime: new Date(form.deployDatetime),
-      endDatetime: form.endDatetime ? new Date(form.endDatetime) : undefined,
-      endReason: form.endReason || undefined,
-      animal_id: form.animal_id,
-      collarModel_id: form.collarModel_id,
-    };
-    if (editingId) {
-      await updateCollarDeployment(editingId, data);
-      setEditingId(null);
-    } else {
-      await createCollarDeployment(data);
+    setSaving(true);
+    try {
+      const data: Omit<CollarDeploymentItem, 'id'> = {
+        collarId: form.collarId,
+        fixIntervalHours: Number(form.fixIntervalHours),
+        deployDatetime: new Date(form.deployDatetime),
+        endDatetime: form.endDatetime ? new Date(form.endDatetime) : undefined,
+        endReason: form.endReason || undefined,
+        animal_id: form.animal_id,
+        collarModel_id: form.collarModel_id,
+      };
+      if (editingId) {
+        await updateCollarDeployment(editingId, data);
+        setEditingId(null);
+      } else {
+        await createCollarDeployment(data);
+      }
+      setForm(emptyForm);
+      await fetchAll();
+      setSheetOpen(false);
+      toast.success('Deployment saved.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.');
+    } finally {
+      setSaving(false);
     }
-    setForm(emptyForm);
-    await fetchAll();
   };
 
   const handleEdit = (item: CollarDeploymentItem) => {
@@ -91,16 +106,27 @@ export function CollarDeploymentsPage() {
       fixIntervalHours: item.fixIntervalHours,
       deployDatetime: toDateInput(item.deployDatetime),
       endDatetime: toDateInput(item.endDatetime),
-      endReason: item.endReason ?? "",
+      endReason: item.endReason ?? '',
       animal_id: item.animal_id,
       collarModel_id: item.collarModel_id,
     });
+    setSheetOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCollarDeployment(id);
+      await fetchAll();
+      toast.success('Deployment deleted.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete.');
+    }
   };
 
   const animalLabel = (id: string | undefined) =>
-    id ? (animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8)) : "—";
+    id ? (animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8)) : '—';
   const modelLabel = (id: string | undefined) => {
-    if (!id) return "—";
+    if (!id) return '—';
     const m = collarModels.find(c => c.id === id);
     return m ? `${m.vendor} ${m.model}` : id.slice(0, 8);
   };
@@ -108,7 +134,10 @@ export function CollarDeploymentsPage() {
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Collar Deployments</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Collar Deployments</h1>
+          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Deployment</Button>
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
@@ -116,12 +145,12 @@ export function CollarDeploymentsPage() {
           </div>
         )}
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{editingId ? "Edit Deployment" : "Add Deployment"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{editingId ? 'Edit Deployment' : 'Add Deployment'}</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Collar ID</Label>
@@ -170,26 +199,23 @@ export function CollarDeploymentsPage() {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button type="submit">{editingId ? "Save Changes" : "Add Deployment"}</Button>
-                {editingId && (
-                  <Button type="button" variant="outline"
-                    onClick={() => { setEditingId(null); setForm(emptyForm); }}>
-                    Cancel
-                  </Button>
-                )}
+                <Button type="submit" disabled={saving}>{saving ? 'Saving…' : (editingId ? 'Save Changes' : 'Add Deployment')}</Button>
+                <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>Cancel</Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </SheetContent>
+        </Sheet>
 
-        <Separator className="my-8" />
+        <div className="mb-4">
+          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-xs" />
+        </div>
 
         {loading ? (
           <Card>
             <Table>
               <TableHeader>
                 <TableRow>
-                  {["Collar ID", "Animal", "Model", "Fix Interval (h)", "Deploy Date", "End Date", "Status", ""].map(h => (
+                  {['Collar ID', 'Animal', 'Model', 'Fix Interval (h)', 'Deploy Date', 'End Date', 'Status', ''].map(h => (
                     <TableHead key={h}>{h}</TableHead>
                   ))}
                 </TableRow>
@@ -205,8 +231,8 @@ export function CollarDeploymentsPage() {
               </TableBody>
             </Table>
           </Card>
-        ) : items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-16">No collar deployments found.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-16">{search ? 'No results match your search.' : 'No collar deployments found.'}</p>
         ) : (
           <Card>
             <Table>
@@ -232,20 +258,19 @@ export function CollarDeploymentsPage() {
                       <TableCell className="text-sm text-muted-foreground">{modelLabel(item.collarModel_id)}</TableCell>
                       <TableCell className="text-right">{item.fixIntervalHours}</TableCell>
                       <TableCell className="text-sm whitespace-nowrap">
-                        {item.deployDatetime ? new Date(item.deployDatetime).toLocaleDateString() : "—"}
+                        {item.deployDatetime ? new Date(item.deployDatetime).toLocaleDateString() : '—'}
                       </TableCell>
                       <TableCell className="text-sm whitespace-nowrap text-muted-foreground">
-                        {item.endDatetime ? new Date(item.endDatetime).toLocaleDateString() : "—"}
+                        {item.endDatetime ? new Date(item.endDatetime).toLocaleDateString() : '—'}
                       </TableCell>
                       <TableCell>
                         {active
                           ? <Badge variant="default">Active</Badge>
-                          : <Badge variant="outline">{item.endReason ?? "Ended"}</Badge>}
+                          : <Badge variant="outline">{item.endReason ?? 'Ended'}</Badge>}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
-                          onClick={() => void deleteCollarDeployment(item.id).then(fetchAll)}>Delete</Button>
+                        <ConfirmDelete label="deployment" onConfirm={() => void handleDelete(item.id)} />
                       </TableCell>
                     </TableRow>
                   );

@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { ConfirmDelete } from '@/components/ui/confirm-delete';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Pager } from '@/components/ui/pager';
-import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -40,7 +43,10 @@ export function AnimalsPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const { page, setPage, pageItems, pageCount } = usePagination(items);
+  const [saving, setSaving] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { search, setSearch, filtered } = useSearch(items);
+  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
 
   const fetchItems = useCallback(async () => {
     setError(null);
@@ -60,11 +66,20 @@ export function AnimalsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = { ...form, createdAt: form.createdAt ?? new Date() };
-    if (editingId) { await updateAnimal(editingId, data); setEditingId(null); }
-    else { await createAnimal(data); }
-    setForm(emptyForm);
-    await fetchItems();
+    setSaving(true);
+    try {
+      const data = { ...form, createdAt: form.createdAt ?? new Date() };
+      if (editingId) { await updateAnimal(editingId, data); setEditingId(null); }
+      else { await createAnimal(data); }
+      setForm(emptyForm);
+      await fetchItems();
+      setSheetOpen(false);
+      toast.success('Animal saved.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (item: AnimalItem) => {
@@ -75,6 +90,17 @@ export function AnimalsPage() {
       currentStatus: item.currentStatus, mortalityCause: item.mortalityCause,
       createdAt: item.createdAt, species_id: item.species_id, studyArea_id: item.studyArea_id,
     });
+    setSheetOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnimal(id);
+      await fetchItems();
+      toast.success('Animal deleted.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete.');
+    }
   };
 
   const speciesName = (id: string | undefined) => id ? (speciesList.find(s => s.id === id)?.commonName ?? '—') : '—';
@@ -83,7 +109,10 @@ export function AnimalsPage() {
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Animals</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Animals</h1>
+          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Animal</Button>
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
@@ -91,12 +120,12 @@ export function AnimalsPage() {
           </div>
         )}
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{editingId ? 'Edit Animal' : 'Add Animal'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{editingId ? 'Edit Animal' : 'Add Animal'}</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Animal ID</Label>
@@ -175,22 +204,22 @@ export function AnimalsPage() {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button type="submit">{editingId ? 'Save Changes' : 'Add Animal'}</Button>
-                {editingId && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingId(null); setForm(emptyForm); }}>Cancel</Button>
-                )}
+                <Button type="submit" disabled={saving}>{saving ? 'Saving…' : (editingId ? 'Save Changes' : 'Add Animal')}</Button>
+                <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>Cancel</Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </SheetContent>
+        </Sheet>
 
-        <Separator className="my-8" />
+        <div className="mb-4">
+          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-xs" />
+        </div>
 
         {loading ? (
           <Card><Table><TableHeader><TableRow>{['ID','Sex','Age','Status','Species','Population',''].map(h => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader>
             <TableBody>{Array.from({length:4}).map((_,i) => <TableRow key={i}>{Array.from({length:7}).map((_,j) => <TableCell key={j}><Skeleton className="h-4 w-full"/></TableCell>)}</TableRow>)}</TableBody></Table></Card>
-        ) : items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-10">No animals yet.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{search ? 'No results match your search.' : 'No animals yet.'}</p>
         ) : (
           <Card>
             <Table>
@@ -220,8 +249,7 @@ export function AnimalsPage() {
                     <TableCell>{studyAreaName(item.studyArea_id)}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>Edit</Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
-                        onClick={() => void deleteAnimal(item.id).then(fetchItems)}>Delete</Button>
+                      <ConfirmDelete label="animal" onConfirm={() => void handleDelete(item.id)} />
                     </TableCell>
                   </TableRow>
                 ))}

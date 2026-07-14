@@ -1,14 +1,17 @@
 ﻿import { useCallback, useEffect, useState } from 'react';
 
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { ConfirmDelete } from '@/components/ui/confirm-delete';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pager } from '@/components/ui/pager';
-import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSearch } from '@/hooks/useSearch';
 import {
   Table,
   TableBody,
@@ -44,7 +47,10 @@ export function CollarModelsPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const { page, setPage, pageItems, pageCount } = usePagination(items);
+  const [saving, setSaving] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { search, setSearch, filtered } = useSearch(items);
+  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
 
   const fetchItems = useCallback(async () => {
     const data = await getCollarModels();
@@ -58,14 +64,23 @@ export function CollarModelsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      await updateCollarModel(editingId, form);
-      setEditingId(null);
-    } else {
-      await createCollarModel(form);
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateCollarModel(editingId, form);
+        setEditingId(null);
+      } else {
+        await createCollarModel(form);
+      }
+      setForm(emptyForm);
+      await fetchItems();
+      setSheetOpen(false);
+      toast.success('Collar model saved.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.');
+    } finally {
+      setSaving(false);
     }
-    setForm(emptyForm);
-    await fetchItems();
   };
 
   const handleEdit = (item: CollarModelItem) => {
@@ -77,28 +92,33 @@ export function CollarModelsPage() {
       defaultFixIntervalHours: item.defaultFixIntervalHours,
       batteryLifeYears: item.batteryLifeYears,
     });
+    setSheetOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    await deleteCollarModel(id);
-    await fetchItems();
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setForm(emptyForm);
+    try {
+      await deleteCollarModel(id);
+      await fetchItems();
+      toast.success('Collar model deleted.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete.');
+    }
   };
 
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-foreground mb-8">Collar Models</h1>
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{editingId ? 'Edit Collar Model' : 'Add Collar Model'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Collar Models</h1>
+          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Model</Button>
+        </div>
+
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent className="sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{editingId ? 'Edit Collar Model' : 'Add Collar Model'}</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Vendor</Label>
@@ -130,16 +150,16 @@ export function CollarModelsPage() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button type="submit">{editingId ? 'Save Changes' : 'Add Model'}</Button>
-                {editingId && (
-                  <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
-                )}
+                <Button type="submit" disabled={saving}>{saving ? 'Saving…' : (editingId ? 'Save Changes' : 'Add Model')}</Button>
+                <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>Cancel</Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </SheetContent>
+        </Sheet>
 
-        <Separator className="my-8" />
+        <div className="mb-4">
+          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-xs" />
+        </div>
 
         {loading ? (
           <Card>
@@ -162,8 +182,8 @@ export function CollarModelsPage() {
               </TableBody>
             </Table>
           </Card>
-        ) : items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-10">No collar models yet.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{search ? 'No results match your search.' : 'No collar models yet.'}</p>
         ) : (
           <Card>
             <Table>
@@ -206,9 +226,7 @@ export function CollarModelsPage() {
                     <TableCell className="text-right">{item.batteryLifeYears}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>Edit</Button>
-                      <Button variant="ghost" size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => void handleDelete(item.id)}>Delete</Button>
+                      <ConfirmDelete label="collar model" onConfirm={() => void handleDelete(item.id)} />
                     </TableCell>
                   </TableRow>
                 ))}

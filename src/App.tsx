@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
 
 import { AppLayout } from '@/components/AppLayout';
 import { AuthPage } from '@/components/AuthPage';
@@ -64,6 +65,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster richColors closeButton />
     </BrowserRouter>
   );
 }
