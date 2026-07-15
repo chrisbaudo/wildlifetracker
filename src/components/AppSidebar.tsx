@@ -55,7 +55,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="px-4 py-4">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🐾</span>
+          <PawPrint size={18} className="text-muted-foreground" />
           <span className="font-bold text-foreground">Wildlife Tracker</span>
         </div>
       </SidebarHeader>
