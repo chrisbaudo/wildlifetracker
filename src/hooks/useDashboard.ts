@@ -17,7 +17,7 @@ export interface DashboardStats {
 
 export interface AlertItem {
   id: string;
-  type: 'mortality' | 'unmonitored';
+  type: 'mortality' | 'unmonitored' | 'stale';
   animalId: string;
   earTagId: string;
   speciesName: string;
@@ -216,23 +216,46 @@ export function useDashboard(): DashboardData {
           )
         ).then(results => {
           if (cancelled) return;
+          const rawPositions = results.flatMap(r => r ? [r] : []);
           setLastKnownPositions(
-            results
-              .flatMap(r => r ? [r] : [])
-              .map(({ dep, fix }) => {
-                const animal = animalMap.get(dep.animal_id);
-                return {
-                  deploymentId: dep.id,
-                  animalId: dep.animal_id,
-                  animalLabel: animal?.animalId ?? dep.animal_id.slice(0, 8),
-                  earTagId: animal?.earTagId ?? '',
-                  speciesName: speciesMap.get(animal?.species_id ?? '') ?? 'Unknown',
-                  status: animal?.currentStatus ?? 'unknown',
-                  fix,
-                };
-              })
+            rawPositions.map(({ dep, fix }) => {
+              const animal = animalMap.get(dep.animal_id);
+              return {
+                deploymentId: dep.id,
+                animalId: dep.animal_id,
+                animalLabel: animal?.animalId ?? dep.animal_id.slice(0, 8),
+                earTagId: animal?.earTagId ?? '',
+                speciesName: speciesMap.get(animal?.species_id ?? '') ?? 'Unknown',
+                status: animal?.currentStatus ?? 'unknown',
+                fix,
+              };
+            })
           );
           setLoadingPositions(false);
+
+          // Stale collar detection: flag active collars with no fix in > 2× their fix interval
+          const now = Date.now();
+          const staleAlerts: AlertItem[] = [];
+          for (const { dep, fix } of rawPositions) {
+            const animal = animalMap.get(dep.animal_id);
+            if (animal?.currentStatus.toLowerCase() !== 'alive') continue;
+            const ageMs = now - new Date(fix.fixDatetimeUtc).getTime();
+            const thresholdMs = dep.fixIntervalHours * 2 * 60 * 60 * 1000;
+            if (ageMs > thresholdMs) {
+              const hoursAgo = Math.round(ageMs / (60 * 60 * 1000));
+              staleAlerts.push({
+                id: `stale-${dep.id}`,
+                type: 'stale',
+                animalId: animal.animalId,
+                earTagId: animal.earTagId,
+                speciesName: speciesMap.get(animal.species_id) ?? 'Unknown',
+                detail: `Last fix ${hoursAgo}h ago · expected every ${dep.fixIntervalHours}h`,
+              });
+            }
+          }
+          if (staleAlerts.length > 0) {
+            setAlerts(prev => [...prev, ...staleAlerts]);
+          }
         }).catch(() => {
           if (!cancelled) setLoadingPositions(false);
         });

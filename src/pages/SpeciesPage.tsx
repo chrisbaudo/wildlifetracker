@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -11,13 +13,12 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   createSpecies, deleteSpecies, getSpecies, updateSpecies, type SpeciesItem,
 } from '@/services/species';
@@ -32,7 +33,8 @@ export function SpeciesPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchItems = useCallback(async () => {
     const data = await getSpecies();
@@ -75,12 +77,24 @@ export function SpeciesPage() {
     }
   };
 
+  const handleExport = () => {
+    exportToCsv('species.csv', filtered.map(s => ({
+      'Common Name': s.commonName,
+      'Scientific Name': s.scientificName,
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-3xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Species</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Species</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Species</Button>
+          </div>
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -127,15 +141,8 @@ export function SpeciesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Common Name</TableHead>
-                  <TooltipProvider>
-                    <TableHead>
-                      <Tooltip>
-                        <TooltipTrigger className="underline decoration-dotted cursor-help">Scientific Name</TooltipTrigger>
-                        <TooltipContent>Latin binomial name</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                  </TooltipProvider>
+                  <SortableHead label="Common Name" sortKey="commonName" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Scientific Name" sortKey="scientificName" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead />
                 </TableRow>
               </TableHeader>

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -14,6 +16,8 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -38,7 +42,8 @@ export function StudyAreasPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchItems = useCallback(async () => {
     setError(null);
@@ -94,12 +99,29 @@ export function StudyAreasPage() {
 
   const speciesName = (id: string | undefined) => id ? (speciesList.find(s => s.id === id)?.commonName ?? '—') : '—';
 
+  const handleExport = () => {
+    exportToCsv('study-areas.csv', filtered.map(sa => ({
+      'Population': sa.population,
+      'GMU': sa.gmu,
+      'Study Area': sa.studyArea,
+      'Center Lat': sa.centerLat,
+      'Center Lon': sa.centerLon,
+      'Migratory': sa.migratory,
+      'Primary Species': speciesName(sa.primarySpecies_id),
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Study Areas</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Study Area</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Study Area</Button>
+          </div>
         </div>
 
         {error && (
@@ -182,11 +204,11 @@ export function StudyAreasPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Population</TableHead>
-                  <TableHead>Study Area</TableHead>
-                  <TableHead>GMU</TableHead>
+                  <SortableHead label="Population" sortKey="population" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Study Area" sortKey="studyArea" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="GMU" sortKey="gmu" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Species</TableHead>
-                  <TableHead>Migratory</TableHead>
+                  <SortableHead label="Migratory" sortKey="migratory" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead />
                 </TableRow>
               </TableHeader>

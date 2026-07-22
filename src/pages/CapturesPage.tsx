@@ -2,6 +2,8 @@
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +17,8 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -54,7 +58,8 @@ export function CapturesPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -122,12 +127,43 @@ export function CapturesPage() {
     { key: 'toothExtracted' as const, label: 'Tooth' },
   ];
 
+  const handleExport = () => {
+    exportToCsv('captures.csv', filtered.map(c => ({
+      'Capture ID': c.captureId,
+      'Date': new Date(c.captureDatetime).toISOString().slice(0, 10),
+      'Animal': animalLabel(c.animal_id),
+      'Capture Method': c.captureMethod,
+      'Lat': c.captureLat,
+      'Lon': c.captureLon,
+      'Weight (kg)': c.bodyWeightKg ?? '',
+      'Chest Girth (cm)': c.chestGirthCm ?? '',
+      'BCS': c.bodyConditionScore ?? '',
+      'Drug': c.immobilizationDrug ?? '',
+      'Dose (mL)': c.drugDoseMl ?? '',
+      'Induction (min)': c.inductionMin ?? '',
+      'Handling (min)': c.handlingTimeMin ?? '',
+      'Blood': c.bloodSample ? 'Y' : 'N',
+      'Fecal': c.fecalSample ? 'Y' : 'N',
+      'Hair': c.hairSample ? 'Y' : 'N',
+      'Tooth': c.toothExtracted ? 'Y' : 'N',
+      'Biologist': personnelLabel(c.biologist_id),
+      'Pilot': personnelLabel(c.pilot_id),
+      'Collar Deployment': deploymentLabel(c.collarDeployment_id),
+      'Notes': c.notes ?? '',
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Captures</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Capture</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Capture</Button>
+          </div>
         </div>
 
         {error && (
@@ -320,10 +356,10 @@ export function CapturesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Capture ID</TableHead>
+                  <SortableHead label="Capture ID" sortKey="captureId" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Animal</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Method</TableHead>
+                  <SortableHead label="Date" sortKey="captureDatetime" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Method" sortKey="captureMethod" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Biologist</TableHead>
                   <TableHead>Pilot</TableHead>
                   <TableHead>Collar</TableHead>

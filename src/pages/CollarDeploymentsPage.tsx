@@ -2,6 +2,8 @@
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -14,6 +16,8 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -49,7 +53,8 @@ export function CollarDeploymentsPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchAll = useCallback(async () => {
     setError(null);
@@ -131,12 +136,29 @@ export function CollarDeploymentsPage() {
     return m ? `${m.vendor} ${m.model}` : id.slice(0, 8);
   };
 
+  const handleExport = () => {
+    exportToCsv('collar-deployments.csv', filtered.map(d => ({
+      'Collar ID': d.collarId,
+      'Animal': animalLabel(d.animal_id),
+      'Model': modelLabel(d.collarModel_id),
+      'Fix Interval (hr)': d.fixIntervalHours,
+      'Deploy Date': new Date(d.deployDatetime).toISOString().slice(0, 10),
+      'End Date': d.endDatetime ? new Date(d.endDatetime).toISOString().slice(0, 10) : '',
+      'End Reason': d.endReason ?? '',
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Collar Deployments</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Deployment</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Deployment</Button>
+          </div>
         </div>
 
         {error && (
@@ -238,12 +260,12 @@ export function CollarDeploymentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Collar ID</TableHead>
+                  <SortableHead label="Collar ID" sortKey="collarId" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Animal</TableHead>
                   <TableHead>Model</TableHead>
-                  <TableHead className="text-right">Fix Interval (h)</TableHead>
-                  <TableHead>Deploy Date</TableHead>
-                  <TableHead>End Date</TableHead>
+                  <SortableHead label="Fix Interval (h)" sortKey="fixIntervalHours" currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right" />
+                  <SortableHead label="Deploy Date" sortKey="deployDatetime" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="End Date" sortKey="endDatetime" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>

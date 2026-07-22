@@ -2,6 +2,8 @@
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -11,6 +13,8 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table,
@@ -20,12 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   createCollarModel,
   deleteCollarModel,
@@ -50,7 +48,8 @@ export function CollarModelsPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchItems = useCallback(async () => {
     const data = await getCollarModels();
@@ -105,12 +104,27 @@ export function CollarModelsPage() {
     }
   };
 
+  const handleExport = () => {
+    exportToCsv('collar-models.csv', filtered.map(m => ({
+      'Vendor': m.vendor,
+      'Model': m.model,
+      'VHF Beacon (MHz)': m.vhfBeaconMhz,
+      'Default Fix Interval (hr)': m.defaultFixIntervalHours,
+      'Battery Life (yr)': m.batteryLifeYears,
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Collar Models</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Model</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Model</Button>
+          </div>
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -189,28 +203,11 @@ export function CollarModelsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TooltipProvider>
-                    <TableHead className="text-right">
-                      <Tooltip>
-                        <TooltipTrigger className="underline decoration-dotted cursor-help">VHF (MHz)</TooltipTrigger>
-                        <TooltipContent>VHF beacon frequency used for radio tracking</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <Tooltip>
-                        <TooltipTrigger className="underline decoration-dotted cursor-help">Fix Interval (h)</TooltipTrigger>
-                        <TooltipContent>Hours between GPS location fixes</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <Tooltip>
-                        <TooltipTrigger className="underline decoration-dotted cursor-help">Battery (yrs)</TooltipTrigger>
-                        <TooltipContent>Expected battery life in years</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                  </TooltipProvider>
+                  <SortableHead label="Vendor" sortKey="vendor" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Model" sortKey="model" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="VHF (MHz)" sortKey="vhfBeaconMhz" currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right" />
+                  <SortableHead label="Fix Interval (h)" sortKey="defaultFixIntervalHours" currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right" />
+                  <SortableHead label="Battery (yrs)" sortKey="batteryLifeYears" currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right" />
                   <TableHead />
                 </TableRow>
               </TableHeader>

@@ -10,6 +10,9 @@ import {
 } from 'react-leaflet';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -20,6 +23,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { getAnimals, type AnimalItem } from '@/services/animals';
 import { getCollarDeployments, type CollarDeploymentItem } from '@/services/collarDeployments';
 import {
@@ -55,7 +60,8 @@ export function TelemetryFixesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAnimal, setSelectedAnimal] = useState<string>('all');
   const [selectedDeployment, setSelectedDeployment] = useState<string | null>(null);
-  const { page: fixPage, setPage: setFixPage, pageItems: pageFixes, pageCount: fixPageCount } = usePagination(fixes);
+  const { sorted: sortedFixes, sortKey: fixSortKey, sortDir: fixSortDir, toggleSort: toggleFixSort } = useSorting(fixes);
+  const { page: fixPage, setPage: setFixPage, pageItems: pageFixes, pageCount: fixPageCount } = usePagination(sortedFixes);
 
   // Load animals + deployments on mount only
   const fetchMeta = useCallback(async () => {
@@ -114,12 +120,33 @@ export function TelemetryFixesPage() {
   ] ?? TRACK_COLORS[0];
   const positions = useMemo<[number, number][]>(() => fixes.map(f => [f.latitude, f.longitude]), [fixes]);
 
+  const handleExport = () => {
+    exportToCsv('telemetry-fixes.csv', fixes.map(f => ({
+      'Fix #': f.fixId,
+      'Datetime (UTC)': new Date(f.fixDatetimeUtc).toISOString(),
+      'Latitude': f.latitude,
+      'Longitude': f.longitude,
+      'Altitude (m)': f.altitudeM ?? '',
+      'Fix Type': f.fixType,
+      'Satellites': f.numSatellites ?? '',
+      'DOP': f.dop ?? '',
+      'Temp (C)': f.temperatureC ?? '',
+      'Activity Index': f.activityIndex ?? '',
+      'Mortality Flag': f.mortalityFlag ? 'Y' : 'N',
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-7xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">Telemetry Fixes</h1>
-          <Badge variant="outline" className="text-muted-foreground">Read-only</Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={fixes.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Badge variant="outline" className="text-muted-foreground">Read-only</Badge>
+          </div>
         </div>
 
         {error && (
@@ -296,15 +323,15 @@ export function TelemetryFixesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Fix #</TableHead>
-                      <TableHead>Datetime (UTC)</TableHead>
+                      <SortableHead label="Fix #" sortKey="fixId" currentKey={fixSortKey} dir={fixSortDir} onSort={toggleFixSort} />
+                      <SortableHead label="Datetime (UTC)" sortKey="fixDatetimeUtc" currentKey={fixSortKey} dir={fixSortDir} onSort={toggleFixSort} />
                       <TableHead className="text-right">Lat</TableHead>
                       <TableHead className="text-right">Lon</TableHead>
                       <TableHead className="text-right">Alt (m)</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Sats</TableHead>
+                      <SortableHead label="Sats" sortKey="numSatellites" currentKey={fixSortKey} dir={fixSortDir} onSort={toggleFixSort} className="text-right" />
                       <TableHead className="text-right">Temp °C</TableHead>
-                      <TableHead>Mort.</TableHead>
+                      <SortableHead label="Mort." sortKey="mortalityFlag" currentKey={fixSortKey} dir={fixSortDir} onSort={toggleFixSort} />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

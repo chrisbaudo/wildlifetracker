@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -16,6 +18,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   createPersonnel, deletePersonnel, getPersonnel, updatePersonnel, type PersonnelItem,
@@ -36,7 +40,8 @@ export function PersonnelPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchItems = useCallback(async () => {
     const data = await getPersonnel();
@@ -83,14 +88,24 @@ export function PersonnelPage() {
     }
   };
 
+  const handleExport = () => {
+    exportToCsv('personnel.csv', filtered.map(p => ({
+      'Name': p.name,
+      'Role': p.role,
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-3xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Personnel</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>
-            Add Person
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Person</Button>
+          </div>
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -154,8 +169,8 @@ export function PersonnelPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
+                  <SortableHead label="Name" sortKey="name" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Role" sortKey="role" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead />
                 </TableRow>
               </TableHeader>

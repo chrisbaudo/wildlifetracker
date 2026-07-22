@@ -272,6 +272,8 @@ export function HomePage() {
                   <li key={alert.id} className="flex items-start gap-3 py-2 first:pt-0 last:pb-0 text-sm">
                     {alert.type === 'mortality' ? (
                       <TriangleAlert size={15} className="mt-0.5 shrink-0 text-destructive" />
+                    ) : alert.type === 'stale' ? (
+                      <RadioTower size={15} className="mt-0.5 shrink-0 text-orange-500" />
                     ) : (
                       <WifiOff size={15} className="mt-0.5 shrink-0 text-amber-500" />
                     )}
@@ -284,7 +286,7 @@ export function HomePage() {
                       variant={alert.type === 'mortality' ? 'destructive' : 'outline'}
                       className="shrink-0"
                     >
-                      {alert.type === 'mortality' ? 'Mortality' : 'Unmonitored'}
+                      {alert.type === 'mortality' ? 'Mortality' : alert.type === 'stale' ? 'Stale Fix' : 'Unmonitored'}
                     </Badge>
                   </li>
                 ))}

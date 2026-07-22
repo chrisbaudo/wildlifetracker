@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import Download from 'lucide-react/dist/esm/icons/download';
+import { exportToCsv } from '@/lib/exportCsv';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDelete } from '@/components/ui/confirm-delete';
@@ -14,6 +16,8 @@ import { Pager } from '@/components/ui/pager';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePagination } from '@/hooks/usePagination';
+import { useSorting } from '@/hooks/useSorting';
+import { SortableHead } from '@/components/ui/sortable-head';
 import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -47,7 +51,8 @@ export function AnimalsPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { search, setSearch, filtered } = useSearch(items);
-  const { page, setPage, pageItems, pageCount } = usePagination(filtered);
+  const { sorted, sortKey, sortDir, toggleSort } = useSorting(filtered);
+  const { page, setPage, pageItems, pageCount } = usePagination(sorted);
 
   const fetchItems = useCallback(async () => {
     setError(null);
@@ -107,12 +112,32 @@ export function AnimalsPage() {
   const speciesName = (id: string | undefined) => id ? (speciesList.find(s => s.id === id)?.commonName ?? '—') : '—';
   const studyAreaName = (id: string | undefined) => id ? (studyAreaList.find(s => s.id === id)?.population ?? '—') : '—';
 
+  const handleExport = () => {
+    exportToCsv('animals.csv', filtered.map(a => ({
+      'Animal ID': a.animalId,
+      'Ear Tag': a.earTagId,
+      'Sex': a.sex,
+      'Age Class': a.ageClass,
+      'Est. Age (yr)': a.estAgeYears ?? '',
+      'Status': a.currentStatus,
+      'Mortality Cause': a.mortalityCause ?? '',
+      'Species': speciesName(a.species_id),
+      'Population': studyAreaName(a.studyArea_id),
+      'Enrolled': new Date(a.createdAt).toISOString().slice(0, 10),
+    })));
+  };
+
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-foreground">Animals</h1>
-          <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Animal</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={filtered.length === 0}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+            <Button onClick={() => { setEditingId(null); setForm(emptyForm); setSheetOpen(true); }}>Add Animal</Button>
+          </div>
         </div>
 
         {error && (
@@ -226,10 +251,10 @@ export function AnimalsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Animal ID</TableHead>
-                  <TableHead>Sex</TableHead>
-                  <TableHead>Age Class</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableHead label="Animal ID" sortKey="animalId" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Sex" sortKey="sex" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Age Class" sortKey="ageClass" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                  <SortableHead label="Status" sortKey="currentStatus" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
                   <TableHead>Species</TableHead>
                   <TableHead>Population</TableHead>
                   <TableHead />
