@@ -8,36 +8,48 @@ A full-stack wildlife telemetry tracking application built with [Rayfin](https:/
 
 ### Dashboard
 - Summary stat cards: total animals, active, collared, recent captures (30 days), mortality count
-- **Last Known Positions map** — shows the most recent GPS fix for every actively collared animal as clickable markers (indigo = alive, red = mortality); clicking navigates to the animal's detail page
-- Active alerts: mortality events and unmonitored animals
+- **Last Known Positions map** — most recent GPS fix for every actively collared animal as clickable markers (indigo = alive, red = mortality); clicking navigates to the animal's detail page
+- **Active alerts** with three severity types:
+  - *Mortality* — animal status flagged as deceased
+  - *Stale Fix* — active collar hasn't reported in > 2× its fix interval (e.g. collar set to 4 h with no fix in 8 h)
+  - *Unmonitored* — alive animal with no active collar deployment
 - Recent captures feed
 - Breakdowns by species and study area (horizontal bar charts)
 - Captures-per-month bar chart (last 6 months)
 
 ### Animals
-- Paginated, searchable table with add/edit/delete
+- Paginated, searchable, **sortable** table with add/edit/delete
 - Animal ID column links to the **Animal Detail page**
+- **Export CSV** — downloads all currently filtered records
 
 ### Animal Detail page (`/animals/:id`)
 - Bio summary cards: species, population, sex, age class, estimated age, enrollment date
 - Collar deployments table with "View track" / "Hide track" buttons
 - Lazy-loaded GPS track map for the selected deployment (same map engine as the Telemetry page)
 - Capture history table with biologist name resolution
+- Edit button opens the animal edit sheet inline
 
 ### Telemetry Fixes
 - Filter by animal and collar deployment
 - Interactive Leaflet map with polyline track, start/end markers, and mortality-flag markers
-- Paginated fix log table
+- **Sortable** fix log table
+- **Export CSV** — downloads all fixes for the selected deployment
 
-### Reference data (full CRUD for each)
+### Reference data (full CRUD + CSV export + sortable columns for each)
 - **Species** — common name, scientific name
 - **Study Areas** — population, GMU, center coordinates, migratory flag, primary species
 - **Collar Models** — vendor, model, VHF beacon MHz, default fix interval, battery life
 - **Personnel** — name, role
 
-### Field data (full CRUD for each)
+### Field data (full CRUD + CSV export + sortable columns for each)
 - **Captures** — datetime, coordinates, weight, BCS, capture method, immobilization drug/dose, sample flags, notes
 - **Collar Deployments** — collar ID, fix interval, deploy/end dates, end reason
+
+### Shared UX patterns (all tables)
+- **Column sorting** — click any column header to sort asc/desc; indicator icons show current state
+- **CSV export** — "Export CSV" button exports the current filtered dataset with human-readable column names; FK IDs are resolved to display names (e.g. species name instead of UUID)
+- **Search filter** — live search across all string fields
+- **Pagination** — 10 rows/page; resets automatically on search or sort change
 
 ## Data model
 
@@ -88,13 +100,16 @@ npx rayfin up status      # verify endpoint health
 │   ├── App.tsx                 # Routes and auth guard
 │   ├── hooks/
 │   │   ├── AuthContext.tsx     # Auth context + useAuth hook
-│   │   ├── useDashboard.ts     # Dashboard data aggregation + last-known-position fetches
+│   │   ├── useDashboard.ts     # Dashboard data aggregation + last-known-position fetches + stale-collar detection
 │   │   ├── usePagination.ts
-│   │   └── useSearch.ts
+│   │   ├── useSearch.ts
+│   │   └── useSorting.ts       # Generic column-sort hook (asc/desc toggle, numeric/date/string compare)
 │   ├── components/
 │   │   ├── AppLayout.tsx       # Sidebar + outlet wrapper
 │   │   ├── AppSidebar.tsx      # Navigation, theme toggle, sign out
-│   │   └── AuthPage.tsx        # Sign-in UI
+│   │   ├── AuthPage.tsx        # Sign-in UI
+│   │   └── ui/
+│   │       └── sortable-head.tsx  # Sortable <TableHead> with chevron indicators
 │   ├── pages/
 │   │   ├── HomePage.tsx              # Dashboard with fleet map
 │   │   ├── AnimalsPage.tsx           # Animal list (CRUD)
@@ -118,6 +133,10 @@ npx rayfin up status      # verify endpoint health
 │       ├── IAuthService.ts
 │       ├── MockAuthService.ts
 │       ├── RayfinAuthService.ts
+│       ├── rayfinClient.ts      # Typed RayfinClient singleton
+│       └── bootstrap.ts         # Env-based auth service selection
+└── src/lib/
+    └── exportCsv.ts             # CSV download utility (UTF-8 BOM, field escaping)
 │       ├── rayfinClient.ts      # Typed RayfinClient singleton
 │       └── bootstrap.ts         # Env-based auth service selection
 └── data/
