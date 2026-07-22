@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AppLayout } from '@/components/AppLayout';
 import { AuthPage } from '@/components/AuthPage';
 import { useAuth } from '@/hooks/AuthContext';
+import { AnimalDetailPage } from '@/pages/AnimalDetailPage';
 import { AnimalsPage } from '@/pages/AnimalsPage';
 import { CapturesPage } from '@/pages/CapturesPage';
 import { CollarDeploymentsPage } from '@/pages/CollarDeploymentsPage';
@@ -57,6 +58,7 @@ function App() {
             <Route path="/species" element={<SpeciesPage />} />
             <Route path="/study-areas" element={<StudyAreasPage />} />
             <Route path="/animals" element={<AnimalsPage />} />
+            <Route path="/animals/:id" element={<AnimalDetailPage />} />
             <Route path="/collar-deployments" element={<CollarDeploymentsPage />} />
             <Route path="/captures" element={<CapturesPage />} />
             <Route path="/telemetry" element={<TelemetryFixesPage />} />

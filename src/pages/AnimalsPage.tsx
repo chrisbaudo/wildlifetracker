@@ -18,6 +18,7 @@ import { useSearch } from '@/hooks/useSearch';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { Link } from 'react-router-dom';
 import {
   createAnimal, deleteAnimal, getAnimals, updateAnimal, type AnimalItem,
 } from '@/services/animals';
@@ -237,7 +238,9 @@ export function AnimalsPage() {
               <TableBody>
                 {pageItems.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.animalId}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link to={`/animals/${item.id}`} className="hover:underline">{item.animalId}</Link>
+                    </TableCell>
                     <TableCell>{item.sex}</TableCell>
                     <TableCell>{item.ageClass}</TableCell>
                     <TableCell>

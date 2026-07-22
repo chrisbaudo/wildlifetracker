@@ -53,3 +53,16 @@ export async function deleteCollarDeployment(id: string): Promise<void> {
   const client = getRayfinClient();
   await client.data.CollarDeployments.delete({ id });
 }
+
+export async function getCollarDeploymentsByAnimal(animalId: string): Promise<CollarDeploymentItem[]> {
+  if (isLocalBackend()) return inMemory.filter(d => d.animal_id === animalId);
+  const client = getRayfinClient();
+  const results = await client.data.CollarDeployments.select([
+    'id', 'collarId', 'fixIntervalHours', 'deployDatetime', 'endDatetime',
+    'endReason', 'animal_id', 'collarModel_id',
+  ] as never[])
+    .where({ animal_id: { eq: animalId } } as never)
+    .orderBy({ deployDatetime: 'desc' } as never)
+    .execute();
+  return results as unknown as CollarDeploymentItem[];
+}

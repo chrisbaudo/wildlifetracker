@@ -62,3 +62,17 @@ export async function deleteAnimal(id: string): Promise<void> {
   const client = getRayfinClient();
   await client.data.Animals.delete({ id });
 }
+
+export async function getAnimalById(id: string): Promise<AnimalItem | null> {
+  if (isLocalBackend()) {
+    return inMemoryAnimals.find((a) => a.id === id) ?? null;
+  }
+  const client = getRayfinClient();
+  const results = await client.data.Animals.select([
+    'id', 'animalId', 'sex', 'ageClass', 'estAgeYears', 'earTagId',
+    'currentStatus', 'mortalityCause', 'createdAt', 'species_id', 'studyArea_id',
+  ] as never[])
+    .where({ id: { eq: id } } as never)
+    .execute();
+  return (results[0] as unknown as AnimalItem) ?? null;
+}

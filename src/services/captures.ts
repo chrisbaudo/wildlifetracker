@@ -70,3 +70,19 @@ export async function deleteCapture(id: string): Promise<void> {
   const client = getRayfinClient();
   await client.data.Captures.delete({ id });
 }
+
+export async function getCapturesByAnimal(animalId: string): Promise<CaptureItem[]> {
+  if (isLocalBackend()) return inMemory.filter(c => c.animal_id === animalId);
+  const client = getRayfinClient();
+  const results = await client.data.Captures.select([
+    'id', 'captureId', 'captureDatetime', 'captureLat', 'captureLon',
+    'bodyWeightKg', 'chestGirthCm', 'bodyConditionScore', 'captureMethod',
+    'immobilizationDrug', 'drugDoseMl', 'inductionMin', 'handlingTimeMin',
+    'bloodSample', 'fecalSample', 'hairSample', 'toothExtracted', 'notes',
+    'animal_id', 'biologist_id', 'pilot_id', 'collarDeployment_id',
+  ] as never[])
+    .where({ animal_id: { eq: animalId } } as never)
+    .orderBy({ captureDatetime: 'desc' } as never)
+    .execute();
+  return results as unknown as CaptureItem[];
+}
