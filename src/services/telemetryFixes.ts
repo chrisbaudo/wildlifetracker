@@ -52,3 +52,16 @@ export async function getTelemetryFixesByDeployment(deploymentId: string): Promi
 
   return all;
 }
+
+/** Fetch only the most recent fix for a single collar deployment. */
+export async function getLastFixByDeployment(deploymentId: string): Promise<TelemetryFixItem | null> {
+  if (isLocalBackend()) return null;
+  const client = getRayfinClient();
+  const page = await client.data.TelemetryFixes
+    .select(FIELDS)
+    .where({ collarDeployment_id: { eq: deploymentId } } as never)
+    .orderBy({ fixDatetimeUtc: 'desc' } as never)
+    .first(1)
+    .executePaginated();
+  return (page.items[0] as unknown as TelemetryFixItem) ?? null;
+}

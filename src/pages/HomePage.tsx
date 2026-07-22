@@ -1,5 +1,10 @@
-﻿import { type LucideIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+﻿import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import { useMemo } from 'react';
+import { CircleMarker, MapContainer, TileLayer, Tooltip as LeafletTooltip } from 'react-leaflet';
+
+import { type LucideIcon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bar, BarChart, XAxis } from 'recharts';
 
 import ActivityIcon from 'lucide-react/dist/esm/icons/activity';
@@ -19,7 +24,16 @@ import WifiOff from 'lucide-react/dist/esm/icons/wifi-off';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDashboard, type DashboardStats } from '@/hooks/useDashboard';
+
+// Fix Leaflet default marker icons broken by bundlers
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -113,11 +127,23 @@ const NAV_CARDS: { title: string; href: string; icon: LucideIcon }[] = [
 // ---------------------------------------------------------------------------
 
 export function HomePage() {
+  const navigate = useNavigate();
   const {
     stats, alerts, activity,
     bySpecies, byStudyArea, capturesByMonth,
+    lastKnownPositions, loadingPositions,
     loading, error,
   } = useDashboard();
+
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (lastKnownPositions.length === 0) return [64, -153];
+    const lats = lastKnownPositions.map(p => p.fix.latitude);
+    const lons = lastKnownPositions.map(p => p.fix.longitude);
+    return [
+      (Math.min(...lats) + Math.max(...lats)) / 2,
+      (Math.min(...lons) + Math.max(...lons)) / 2,
+    ];
+  }, [lastKnownPositions]);
 
   if (loading) {
     return (
@@ -159,6 +185,67 @@ export function HomePage() {
           variant={stats.mortalityCount > 0 ? 'destructive' : 'default'}
         />
       </div>
+
+      {/* Last Known Positions */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <MapPin size={15} className="text-muted-foreground" />
+            Last Known Positions
+            {!loadingPositions && lastKnownPositions.length > 0 && (
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                ({lastKnownPositions.length} collared)
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loadingPositions ? (
+            <Skeleton className="h-72 w-full rounded-none rounded-b-xl" />
+          ) : lastKnownPositions.length === 0 ? (
+            <div className="flex items-center justify-center h-72 text-sm text-muted-foreground">
+              No active collar deployments with telemetry data.
+            </div>
+          ) : (
+            <MapContainer
+              key={lastKnownPositions.length}
+              center={mapCenter}
+              zoom={6}
+              style={{ height: '288px', width: '100%' }}
+              scrollWheelZoom={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {lastKnownPositions.map(pos => {
+                const color = pos.status === 'mortality'
+                  ? '#ef4444'
+                  : pos.status === 'alive'
+                    ? '#6366f1'
+                    : '#f59e0b';
+                return (
+                  <CircleMarker
+                    key={pos.deploymentId}
+                    center={[pos.fix.latitude, pos.fix.longitude]}
+                    radius={8}
+                    pathOptions={{ color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 }}
+                    eventHandlers={{ click: () => navigate(`/animals/${pos.animalId}`) }}
+                  >
+                    <LeafletTooltip>
+                      <strong>{pos.animalLabel}</strong> · {pos.earTagId}<br />
+                      {pos.speciesName}<br />
+                      {new Date(pos.fix.fixDatetimeUtc).toLocaleString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </LeafletTooltip>
+                  </CircleMarker>
+                );
+              })}
+            </MapContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Alerts + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

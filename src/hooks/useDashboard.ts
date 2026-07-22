@@ -5,6 +5,7 @@ import { getCaptures } from '@/services/captures';
 import { getCollarDeployments } from '@/services/collarDeployments';
 import { getSpecies } from '@/services/species';
 import { getStudyAreas } from '@/services/studyAreas';
+import { getLastFixByDeployment, type TelemetryFixItem } from '@/services/telemetryFixes';
 
 export interface DashboardStats {
   totalAnimals: number;
@@ -40,6 +41,16 @@ export interface MonthlyCapture {
   count: number;
 }
 
+export interface LastKnownPosition {
+  deploymentId: string;
+  animalId: string;
+  animalLabel: string;
+  earTagId: string;
+  speciesName: string;
+  status: string;
+  fix: TelemetryFixItem;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   alerts: AlertItem[];
@@ -47,6 +58,8 @@ export interface DashboardData {
   bySpecies: CountEntry[];
   byStudyArea: CountEntry[];
   capturesByMonth: MonthlyCapture[];
+  lastKnownPositions: LastKnownPosition[];
+  loadingPositions: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -68,6 +81,8 @@ export function useDashboard(): DashboardData {
   const [bySpecies, setBySpecies] = useState<CountEntry[]>([]);
   const [byStudyArea, setByStudyArea] = useState<CountEntry[]>([]);
   const [capturesByMonth, setCapturesByMonth] = useState<MonthlyCapture[]>([]);
+  const [lastKnownPositions, setLastKnownPositions] = useState<LastKnownPosition[]>([]);
+  const [loadingPositions, setLoadingPositions] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,9 +201,44 @@ export function useDashboard(): DashboardData {
           if (monthCounts.has(key)) monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
         }
         setCapturesByMonth(monthKeys.map((key, i) => ({ month: monthLabels[i], count: monthCounts.get(key) ?? 0 })));
+
+        // Kick off last-fix fetches for active deployments (fire-and-forget)
+        const activeDeps = deployments.filter(d => !d.endDatetime).slice(0, 30);
+        if (activeDeps.length === 0) {
+          setLoadingPositions(false);
+          return;
+        }
+        void Promise.all(
+          activeDeps.map(dep =>
+            getLastFixByDeployment(dep.id)
+              .then(fix => fix ? { dep, fix } : null)
+              .catch(() => null)
+          )
+        ).then(results => {
+          if (cancelled) return;
+          setLastKnownPositions(
+            results
+              .flatMap(r => r ? [r] : [])
+              .map(({ dep, fix }) => {
+                const animal = animalMap.get(dep.animal_id);
+                return {
+                  deploymentId: dep.id,
+                  animalId: dep.animal_id,
+                  animalLabel: animal?.animalId ?? dep.animal_id.slice(0, 8),
+                  earTagId: animal?.earTagId ?? '',
+                  speciesName: speciesMap.get(animal?.species_id ?? '') ?? 'Unknown',
+                  status: animal?.currentStatus ?? 'unknown',
+                  fix,
+                };
+              })
+          );
+          setLoadingPositions(false);
+        }).catch(() => {
+          if (!cancelled) setLoadingPositions(false);
+        });
       })
       .catch(err => {
-        if (!cancelled) setError(String(err));
+        if (!cancelled) { setError(String(err)); setLoadingPositions(false); }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -197,5 +247,5 @@ export function useDashboard(): DashboardData {
     return () => { cancelled = true; };
   }, []);
 
-  return { stats, alerts, activity, bySpecies, byStudyArea, capturesByMonth, loading, error };
+  return { stats, alerts, activity, bySpecies, byStudyArea, capturesByMonth, lastKnownPositions, loadingPositions, loading, error };
 }
