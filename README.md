@@ -4,6 +4,58 @@ A full-stack wildlife telemetry tracking application built with [Rayfin](https:/
 
 **Live app:** https://snowy-wren-b7eae0367b-northcentralus.webapp.fabricapps.net
 
+## Problem statement
+
+Wildlife biologists and field technicians spend significant time managing GPS collar data across disconnected spreadsheets, per-study databases, and proprietary vendor portals. There is no single place to cross-reference capture records, collar health, and real-time telemetry — making it hard to detect equipment failures, mortality events, or coverage gaps before they become costly.
+
+## Target user
+
+- **Wildlife biologists and researchers** who deploy GPS collars on wild animals (ungulates, carnivores, birds) and need to monitor fleet health and animal status from the office or the field.
+- **Field technicians** who record capture data and collar deployments and need a fast, mobile-friendly data-entry interface.
+- **Project managers** who need summary dashboards and exportable datasets for grant reporting and regulatory submissions.
+
+## Solution architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  Browser (React + shadcn/ui + Leaflet)                               │
+│  ┌─────────────┐  ┌─────────────────────┐  ┌──────────────────────┐ │
+│  │  Dashboard  │  │  CRUD pages (8)     │  │  Telemetry map       │ │
+│  │  + alerts   │  │  + CSV export       │  │  + track replay      │ │
+│  └──────┬──────┘  └────────┬────────────┘  └──────────┬───────────┘ │
+│         └─────────────────►│ RayfinClient (typed SDK) │◄────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+                              │ GraphQL / REST
+┌─────────────────────────────▼─────────────────────────────────────────┐
+│  Rayfin (Data API Builder on Microsoft Fabric)                         │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │  rayfin.yml — auth (Entra ID + password), mssql dialect,          │ │
+│  │               static hosting, entity-level RLS policies           │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+│  Entity schema (TypeScript decorators → SQL DDL via rayfin up db apply)│
+│  Animals · Captures · CollarDeployments · CollarModel ·               │
+│  Personnel · Species · StudyAreas · TelemetryFixes                     │
+└───────────────────────────────┬────────────────────────────────────────┘
+                                │ TDS / mssql
+┌───────────────────────────────▼───────────────────┐
+│  Microsoft Fabric SQL Database                    │
+│  (managed, serverless, Entra-integrated)          │
+└───────────────────────────────────────────────────┘
+```
+
+**What was built:**
+
+| Layer | Technology | Role |
+|---|---|---|
+| Frontend | React 18 + Vite + TypeScript | SPA with routing, auth guard, and interactive maps |
+| UI components | shadcn/ui (Radix) + Tailwind CSS | Accessible, themeable component library |
+| Maps | Leaflet + React-Leaflet | GPS track visualisation and fleet overview map |
+| API / auth | Rayfin (Data API Builder) | Auto-generated GraphQL + REST endpoints from TypeScript entity decorators; Entra ID SSO + password auth |
+| Database | Microsoft Fabric SQL Database (mssql) | Relational store for all telemetry, capture, and reference data |
+| Hosting | Fabric Static Web Apps (via `rayfin up`) | Zero-config CDN hosting co-located with the data backend |
+| Auth | Microsoft Entra ID (Fabric SSO) | Single sign-on for Microsoft-authenticated users; optional password login for external collaborators |
+
 ## Features
 
 ### Dashboard
