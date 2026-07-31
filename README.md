@@ -18,10 +18,10 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  Browser (React + shadcn/ui + Leaflet)                               │
+│  Browser (React + shadcn/ui)                                         │
 │  ┌─────────────┐  ┌─────────────────────┐  ┌──────────────────────┐ │
-│  │  Dashboard  │  │  CRUD pages (8)     │  │  Telemetry map       │ │
-│  │  + alerts   │  │  + CSV export       │  │  + track replay      │ │
+│  │  Dashboard  │  │  CRUD pages (8)     │  │  Fabric Real-Time    │ │
+│  │  + alerts   │  │  + CSV export       │  │  Dashboard           │ │
 │  └──────┬──────┘  └────────┬────────────┘  └──────────┬───────────┘ │
 │         └─────────────────►│ RayfinClient (typed SDK) │◄────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
@@ -48,9 +48,9 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 
 | Layer | Technology | Role |
 |---|---|---|
-| Frontend | React 18 + Vite + TypeScript | SPA with routing, auth guard, and interactive maps |
+| Frontend | React 19 + Vite + TypeScript | SPA with routing, auth guard, and embedded real-time analytics |
 | UI components | shadcn/ui (Radix) + Tailwind CSS | Accessible, themeable component library |
-| Maps | Leaflet + React-Leaflet | GPS track visualisation and fleet overview map |
+| Real-time analytics | Fabric Real-Time Dashboard + Eventstream + KQL Database | Live wildlife telemetry visualization |
 | API / auth | Rayfin (Data API Builder) | Auto-generated GraphQL + REST endpoints from TypeScript entity decorators; Entra ID SSO + password auth |
 | Database | Microsoft Fabric SQL Database (mssql) | Relational store for all telemetry, capture, and reference data |
 | Hosting | Fabric Static Web Apps (via `rayfin up`) | Zero-config CDN hosting co-located with the data backend |
@@ -60,7 +60,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 
 ### Dashboard
 - Summary stat cards: total animals, active, collared, recent captures (30 days), mortality count
-- **Last Known Positions map** — most recent GPS fix for every actively collared animal as clickable markers (indigo = alive, red = mortality); clicking navigates to the animal's detail page
+- Embedded **Fabric Real-Time Dashboard** for live collar positions and telemetry
 - **Active alerts** with three severity types:
   - *Mortality* — animal status flagged as deceased
   - *Stale Fix* — active collar hasn't reported in > 2× its fix interval (e.g. collar set to 4 h with no fix in 8 h)
@@ -77,13 +77,13 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 ### Animal Detail page (`/animals/:id`)
 - Bio summary cards: species, population, sex, age class, estimated age, enrollment date
 - Collar deployments table with "View track" / "Hide track" buttons
-- Lazy-loaded GPS track map for the selected deployment (same map engine as the Telemetry page)
+- Fabric Real-Time Dashboard alongside the selected deployment's fix count
 - Capture history table with biologist name resolution
 - Edit button opens the animal edit sheet inline
 
 ### Telemetry Fixes
 - Filter by animal and collar deployment
-- Interactive Leaflet map with polyline track, start/end markers, and mortality-flag markers
+- Embedded Fabric Real-Time Dashboard backed by the telemetry Eventstream and KQL Database
 - **Sortable** fix log table
 - **Export CSV** — downloads all fixes for the selected deployment
 
@@ -125,6 +125,15 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173). Sign in with your Microsoft Fabric credentials.
 
+Create a Real-Time Dashboard in workspace `wsdemodev005` using the `wildlifetelemetry` KQL Database. Register a Microsoft Entra SPA with delegated `Fabric.Embed` plus `Item.Read.All` permissions. Add `<app-origin>/fabric-embed-redirect.html` as its SPA redirect URI, then configure its client ID in `rayfin/.env`:
+
+```bash
+RAYFIN_PUBLIC_REALTIME_DASHBOARD_CLIENT_ID=<entra-app-client-id>
+RAYFIN_PUBLIC_REALTIME_DASHBOARD_ITEM_ID=<real-time-dashboard-item-id>
+```
+
+The workspace and tenant IDs are populated by `rayfin up`. The signed-in user must have Viewer or higher access to the dashboard. When embed configuration is incomplete, the app shows a link to the dashboard in Fabric instead of an empty frame.
+
 To deploy your own instance:
 
 ```bash
@@ -163,16 +172,16 @@ npx rayfin up status      # verify endpoint health
 │   │   └── ui/
 │   │       └── sortable-head.tsx  # Sortable <TableHead> with chevron indicators
 │   ├── pages/
-│   │   ├── HomePage.tsx              # Dashboard with fleet map
+│   │   ├── HomePage.tsx              # Summary + Fabric Real-Time Dashboard
 │   │   ├── AnimalsPage.tsx           # Animal list (CRUD)
-│   │   ├── AnimalDetailPage.tsx      # Animal profile + telemetry map + captures
+│   │   ├── AnimalDetailPage.tsx      # Animal profile + real-time dashboard + captures
 │   │   ├── CapturesPage.tsx
 │   │   ├── CollarDeploymentsPage.tsx
 │   │   ├── CollarModelsPage.tsx
 │   │   ├── PersonnelPage.tsx
 │   │   ├── SpeciesPage.tsx
 │   │   ├── StudyAreasPage.tsx
-│   │   └── TelemetryFixesPage.tsx    # GPS track map with deployment selector
+│   │   └── TelemetryFixesPage.tsx    # Real-time dashboard with deployment selector
 │   └── services/
 │       ├── animals.ts           # getAnimals, getAnimalById, create/update/delete
 │       ├── captures.ts          # getCaptures, getCapturesByAnimal, …

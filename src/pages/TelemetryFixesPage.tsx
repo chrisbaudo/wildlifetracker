@@ -1,14 +1,6 @@
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  CircleMarker,
-  MapContainer,
-  Polyline,
-  TileLayer,
-  Tooltip,
-} from 'react-leaflet';
 
+import { FabricRealtimeDashboard } from '@/components/FabricRealtimeDashboard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Download from 'lucide-react/dist/esm/icons/download';
@@ -30,14 +22,6 @@ import { getCollarDeployments, type CollarDeploymentItem } from '@/services/coll
 import {
   getTelemetryFixesByDeployment, type TelemetryFixItem,
 } from '@/services/telemetryFixes';
-
-// Fix Leaflet default marker icons broken by bundlers
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
 
 const TRACK_COLORS = [
   '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
@@ -104,21 +88,7 @@ export function TelemetryFixesPage() {
 
   const animalLabel = (id: string) => animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8);
 
-  const mapCenter = useMemo<[number, number]>(() => {
-    if (fixes.length === 0) return [64, -153];
-    const lats = fixes.map(f => f.latitude);
-    const lons = fixes.map(f => f.longitude);
-    return [
-      (Math.min(...lats) + Math.max(...lats)) / 2,
-      (Math.min(...lons) + Math.max(...lons)) / 2,
-    ];
-  }, [fixes]);
-
   const totalMortality = useMemo(() => fixes.filter(f => f.mortalityFlag).length, [fixes]);
-  const trackColor = TRACK_COLORS[
-    visibleDeployments.findIndex(d => d.id === selectedDeployment) % TRACK_COLORS.length
-  ] ?? TRACK_COLORS[0];
-  const positions = useMemo<[number, number][]>(() => fixes.map(f => [f.latitude, f.longitude]), [fixes]);
 
   const handleExport = () => {
     exportToCsv('telemetry-fixes.csv', fixes.map(f => ({
@@ -237,82 +207,9 @@ export function TelemetryFixesPage() {
               ))}
             </div>
 
-            {/* Map */}
-            {loadingFixes ? (
-              <Skeleton className="w-full h-[520px] rounded-xl mb-6" />
-            ) : (
-              <Card className="overflow-hidden mb-6 relative">
-                <MapContainer
-                  key={selectedDeployment}
-                  center={mapCenter}
-                  zoom={7}
-                  style={{ height: '520px', width: '100%' }}
-                  scrollWheelZoom
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-
-                  {fixes.length > 0 && (
-                    <>
-                      <Polyline positions={positions} color={trackColor} weight={2} opacity={0.8} />
-
-                      <CircleMarker
-                        center={positions[0]}
-                        radius={6}
-                        pathOptions={{ color: '#fff', fillColor: trackColor, fillOpacity: 1, weight: 2 }}
-                      >
-                        <Tooltip>Start · {formatDate(fixes[0].fixDatetimeUtc)}</Tooltip>
-                      </CircleMarker>
-
-                      {fixes.filter(f => f.mortalityFlag).map(f => (
-                        <CircleMarker
-                          key={f.id}
-                          center={[f.latitude, f.longitude]}
-                          radius={7}
-                          pathOptions={{ color: '#fff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}
-                        >
-                          <Tooltip>⚠ Mortality · Fix #{f.fixId}<br />{formatDate(f.fixDatetimeUtc)}</Tooltip>
-                        </CircleMarker>
-                      ))}
-
-                      <CircleMarker
-                        center={positions[positions.length - 1]}
-                        radius={5}
-                        pathOptions={{ color: trackColor, fillColor: '#fff', fillOpacity: 1, weight: 2 }}
-                      >
-                        <Tooltip>Last fix · {formatDate(fixes[fixes.length - 1].fixDatetimeUtc)}</Tooltip>
-                      </CircleMarker>
-                    </>
-                  )}
-                </MapContainer>
-
-                {fixes.length === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
-                    <div className="bg-card/90 backdrop-blur-sm border border-border rounded-xl px-6 py-4 text-center shadow-lg">
-                      <p className="text-sm font-medium text-foreground">No fixes for this deployment</p>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* Legend */}
-            <div className="flex flex-wrap gap-4 mb-6 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-3 rounded-full bg-primary border-2 border-white" />
-                Start
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-3 rounded-full bg-white border-2 border-primary" />
-                Last fix
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-                Mortality flag
-              </span>
-            </div>
+            <Card className="overflow-hidden mb-6">
+              <FabricRealtimeDashboard title="Wildlife Telemetry Live" />
+            </Card>
 
             {/* Fix log table */}
             <Card>

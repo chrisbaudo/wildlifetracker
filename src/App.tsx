@@ -11,6 +11,7 @@ import { CollarDeploymentsPage } from '@/pages/CollarDeploymentsPage';
 import { CollarModelsPage } from '@/pages/CollarModelsPage';
 import { HomePage } from '@/pages/HomePage';
 import { PersonnelPage } from '@/pages/PersonnelPage';
+import { RealtimeDashboardPage } from '@/pages/RealtimeDashboardPage';
 import { SpeciesPage } from '@/pages/SpeciesPage';
 import { StudyAreasPage } from '@/pages/StudyAreasPage';
 import { TelemetryFixesPage } from '@/pages/TelemetryFixesPage';
@@ -62,6 +63,7 @@ function App() {
             <Route path="/collar-deployments" element={<CollarDeploymentsPage />} />
             <Route path="/captures" element={<CapturesPage />} />
             <Route path="/telemetry" element={<TelemetryFixesPage />} />
+            <Route path="/realtime-dashboard" element={<RealtimeDashboardPage />} />
           </Route>
         </Route>
 

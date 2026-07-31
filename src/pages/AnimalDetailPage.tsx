@@ -1,13 +1,6 @@
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import {
-  CircleMarker, MapContainer, Polyline, TileLayer,
-  Tooltip as LeafletTooltip,
-} from 'react-leaflet';
-
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import ClipboardList from 'lucide-react/dist/esm/icons/clipboard-list';
 import Satellite from 'lucide-react/dist/esm/icons/satellite';
@@ -15,6 +8,7 @@ import Satellite from 'lucide-react/dist/esm/icons/satellite';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { FabricRealtimeDashboard } from '@/components/FabricRealtimeDashboard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pager } from '@/components/ui/pager';
@@ -42,14 +36,6 @@ import {
   getTelemetryFixesByDeployment, type TelemetryFixItem,
 } from '@/services/telemetryFixes';
 
-// Fix Leaflet default marker icons broken by bundlers
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
 const TRACK_COLORS = [
   '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
   '#ec4899', '#8b5cf6', '#14b8a6', '#f97316',
@@ -59,12 +45,6 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 
   alive: 'default',
   mortality: 'destructive',
 };
-
-function formatDate(d: Date | string) {
-  return new Date(d).toLocaleString(undefined, {
-    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-}
 
 function formatDateShort(d: Date | string | undefined) {
   if (!d) return '—';
@@ -195,25 +175,6 @@ export function AnimalDetailPage() {
     return cm ? `${cm.vendor} ${cm.model}` : '—';
   };
   const biologistName = (pid: string) => personnel.find(p => p.id === pid)?.name ?? '—';
-
-  const mapCenter = useMemo<[number, number]>(() => {
-    if (fixes.length === 0) return [64, -153];
-    const lats = fixes.map(f => f.latitude);
-    const lons = fixes.map(f => f.longitude);
-    return [
-      (Math.min(...lats) + Math.max(...lats)) / 2,
-      (Math.min(...lons) + Math.max(...lons)) / 2,
-    ];
-  }, [fixes]);
-
-  const positions = useMemo<[number, number][]>(
-    () => fixes.map(f => [f.latitude, f.longitude]),
-    [fixes],
-  );
-
-  const trackColor =
-    TRACK_COLORS[deployments.findIndex(d => d.id === selectedDeployment) % TRACK_COLORS.length]
-    ?? TRACK_COLORS[0];
 
   if (loading) {
     return (
@@ -369,78 +330,20 @@ export function AnimalDetailPage() {
           )}
         </section>
 
-        {/* Telemetry map */}
+        {/* Real-time telemetry */}
         {selectedDeployment && (
           <section className="mb-8">
             {loadingFixes ? (
               <Skeleton className="w-full h-[440px] rounded-xl" />
             ) : (
               <>
-                <Card className="overflow-hidden mb-3 relative">
-                  <MapContainer
-                    key={selectedDeployment}
-                    center={mapCenter}
-                    zoom={7}
-                    style={{ height: '440px', width: '100%' }}
-                    scrollWheelZoom
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {fixes.length > 0 && (
-                      <>
-                        <Polyline positions={positions} color={trackColor} weight={2} opacity={0.8} />
-                        <CircleMarker
-                          center={positions[0]}
-                          radius={6}
-                          pathOptions={{ color: '#fff', fillColor: trackColor, fillOpacity: 1, weight: 2 }}
-                        >
-                          <LeafletTooltip>Start · {formatDate(fixes[0].fixDatetimeUtc)}</LeafletTooltip>
-                        </CircleMarker>
-                        {fixes.filter(f => f.mortalityFlag).map(f => (
-                          <CircleMarker
-                            key={f.id}
-                            center={[f.latitude, f.longitude]}
-                            radius={7}
-                            pathOptions={{ color: '#fff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}
-                          >
-                            <LeafletTooltip>⚠ Mortality · Fix #{f.fixId}</LeafletTooltip>
-                          </CircleMarker>
-                        ))}
-                        <CircleMarker
-                          center={positions[positions.length - 1]}
-                          radius={5}
-                          pathOptions={{ color: trackColor, fillColor: '#fff', fillOpacity: 1, weight: 2 }}
-                        >
-                          <LeafletTooltip>
-                            Last fix · {formatDate(fixes[fixes.length - 1].fixDatetimeUtc)}
-                          </LeafletTooltip>
-                        </CircleMarker>
-                      </>
-                    )}
-                  </MapContainer>
-                  {fixes.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
-                      <div className="bg-card/90 backdrop-blur-sm border border-border rounded-xl px-6 py-4 text-center shadow-lg">
-                        <p className="text-sm font-medium text-foreground">No fixes for this deployment</p>
-                      </div>
-                    </div>
-                  )}
+                <Card className="overflow-hidden mb-3">
+                  <FabricRealtimeDashboard
+                    height={440}
+                    title={`${animal.animalId} Real-Time Telemetry`}
+                  />
                 </Card>
-                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-primary border-2 border-white" />
-                    Start
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-white border-2 border-primary" />
-                    Last fix
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-                    Mortality flag
-                  </span>
+                <div className="flex text-xs text-muted-foreground">
                   <span className="ml-auto tabular-nums">{fixes.length.toLocaleString()} fixes</span>
                 </div>
               </>

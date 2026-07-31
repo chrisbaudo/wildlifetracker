@@ -3,7 +3,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset>
         <header className="flex items-center h-12 px-4 border-b border-border bg-background shrink-0">

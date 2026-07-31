@@ -12,6 +12,12 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
+    rollupOptions: {
+      input: {
+        app: resolve(import.meta.dirname, 'index.html'),
+        fabricEmbedRedirect: resolve(import.meta.dirname, 'fabric-embed-redirect.html'),
+      },
+    },
   },
   esbuild: {
     target: 'es2022',

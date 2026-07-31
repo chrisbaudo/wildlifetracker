@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/AuthContext';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Real-Time Dashboard', href: '/realtime-dashboard', icon: RadioTower },
 ];
 
 const REFERENCE_ITEMS = [
