@@ -14,6 +14,16 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 - **Field technicians** who record capture data and collar deployments and need a fast, mobile-friendly data-entry interface.
 - **Project managers** who need summary dashboards and exportable datasets for grant reporting and regulatory submissions.
 
+## Microsoft Fabric technologies
+
+- **Fabric SQL Database** for relational wildlife, capture, collar, and telemetry data
+- **Fabric Eventstream** for real-time telemetry ingestion
+- **Fabric KQL Database** for real-time telemetry storage and analysis
+- **Fabric Real-Time Dashboard** for live animal locations and collar telemetry visualization
+- **Fabric Static Web Apps** for hosting the React application
+- **Fabric SSO with Microsoft Entra ID** for authentication in the deployed application
+- **Rayfin and Data API Builder** for typed data APIs, schema deployment, and access control
+
 ## Solution architecture
 
 ```
