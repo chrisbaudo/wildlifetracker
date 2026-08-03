@@ -1,7 +1,7 @@
-# Data Loading Order for Normalized Schema
+# Seed Data Loading Order
 
 ## Overview
-The normalized schema eliminates redundancy by extracting reference tables and establishing proper foreign key relationships. Data must be loaded in dependency order.
+The normalized schema extracts reference tables and uses foreign key relationships. Load the staging CSVs first, then run the numbered SQL scripts in order so each referenced row exists before it is used.
 
 ## Prerequisites
 1. Load all CSV files into staging tables:
@@ -35,9 +35,10 @@ These tables have no foreign key dependencies and can be loaded in any order:
 6. **Captures** - `INSERT INTO Captures`
    - Requires: Animals, Personnel
 
-### Step 5: Load CollarDeployments (Depends on Animals, CollarModel, and Captures)
+### Step 5: Load CollarDeployments and Link Captures
 7. **CollarDeployments** - `INSERT INTO CollarDeployments`
-   - Requires: Animals, CollarModel, Captures
+   - The entity requires: Animals, CollarModel
+   - The script runs after Captures so it can backfill the optional `Captures.collarDeployment_id` relationship
 
 ### Step 6: Load TelemetryFixes (Depends on CollarDeployments)
 8. **TelemetryFixes** - `INSERT INTO TelemetryFixes`
@@ -53,17 +54,20 @@ These tables have no foreign key dependencies and can be loaded in any order:
 - **TelemetryFix**: Removed `vendor`, `animal_id` (direct relationship)
 
 ### Added Foreign Key Relationships
-- **Animal** → Species (via `species_id`)
-- **StudyArea** → Species (via `primarySpecies_id`)
-- **Capture** → Personnel x2 (via `biologist_id` and `pilot_id`)
-- **Capture** → CollarDeployment (via `collarDeployment_id`)
-- **CollarDeployment** → CollarModel (via `collarModel_id`)
-- **CollarDeployment** → Capture (via `capture_id` for location)
+- **Animal** -> Species (via `species_id`)
+- **Animal** -> StudyAreas (via `studyArea_id`)
+- **StudyArea** -> Species (via `primarySpecies_id`)
+- **Capture** -> Animals (via `animal_id`)
+- **Capture** -> Personnel x2 (via `biologist_id` and `pilot_id`)
+- **Capture** -> CollarDeployments (optional, via `collarDeployment_id`)
+- **CollarDeployment** -> Animals (via `animal_id`)
+- **CollarDeployment** -> CollarModel (via `collarModel_id`)
+- **TelemetryFix** -> CollarDeployments (via `collarDeployment_id`)
 
 ## Benefits
-- ✅ Full Third Normal Form (3NF) compliance
-- ✅ No transitive dependencies
-- ✅ Single source of truth for reference data
-- ✅ Reduced data redundancy
-- ✅ Improved data integrity through foreign key constraints
-- ✅ Easier maintenance (update once, reflect everywhere)
+- Full Third Normal Form (3NF) compliance
+- No transitive dependencies
+- Single source of truth for reference data
+- Reduced data redundancy
+- Improved data integrity through foreign key constraints
+- Easier maintenance (update once, reflect everywhere)

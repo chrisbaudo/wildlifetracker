@@ -33,7 +33,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 │  │               static hosting, entity-level RLS policies           │ │
 │  └───────────────────────────────────────────────────────────────────┘ │
 │                                                                         │
-│  Entity schema (TypeScript decorators → SQL DDL via rayfin up db apply)│
+│  Entity schema (TypeScript decorators → SQL DDL via rayfin up)         │
 │  Animals · Captures · CollarDeployments · CollarModel ·               │
 │  Personnel · Species · StudyAreas · TelemetryFixes                     │
 └───────────────────────────────┬────────────────────────────────────────┘
@@ -51,10 +51,10 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 | Frontend | React 19 + Vite + TypeScript | SPA with routing, auth guard, and embedded real-time analytics |
 | UI components | shadcn/ui (Radix) + Tailwind CSS | Accessible, themeable component library |
 | Real-time analytics | Fabric Real-Time Dashboard + Eventstream + KQL Database | Live wildlife telemetry visualization |
-| API / auth | Rayfin (Data API Builder) | Auto-generated GraphQL + REST endpoints from TypeScript entity decorators; Entra ID SSO + password auth |
+| API / auth | Rayfin (Data API Builder) | Auto-generated GraphQL + REST endpoints from TypeScript entity decorators; Fabric SSO in deployed apps and password auth for local development |
 | Database | Microsoft Fabric SQL Database (mssql) | Relational store for all telemetry, capture, and reference data |
 | Hosting | Fabric Static Web Apps (via `rayfin up`) | Zero-config CDN hosting co-located with the data backend |
-| Auth | Microsoft Entra ID (Fabric SSO) | Single sign-on for Microsoft-authenticated users; optional password login for external collaborators |
+| Auth | Microsoft Entra ID (Fabric SSO) | Single sign-on for Microsoft-authenticated users inside the Fabric portal |
 
 ## Features
 
@@ -77,7 +77,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 ### Animal Detail page (`/animals/:id`)
 - Bio summary cards: species, population, sex, age class, estimated age, enrollment date
 - Collar deployments table with "View track" / "Hide track" buttons
-- Fabric Real-Time Dashboard alongside the selected deployment's fix count
+- Fabric Real-Time Dashboard filtered to the current animal through the dashboard's `_animalId` parameter, alongside the selected deployment's fix count
 - Capture history table with biologist name resolution
 - Edit button opens the animal edit sheet inline
 
@@ -119,13 +119,16 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 ## Getting started
 
 ```bash
-# Start local dev server (connects to the deployed Fabric backend)
+# Install dependencies
+npm install
+
+# Start Rayfin services and the Vite development server
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). Sign in with your Microsoft Fabric credentials.
+Open [http://localhost:5173](http://localhost:5173). The `dev` script starts the Rayfin backend without static hosting, generates the Vite environment, and then starts Vite. Password authentication is available locally; Fabric SSO is used by the deployed app inside the Fabric portal.
 
-Create a Real-Time Dashboard in workspace `wsdemodev005` using the `wildlifetelemetry` KQL Database. Register a Microsoft Entra SPA with delegated `Fabric.Embed` plus `Item.Read.All` permissions. Add `<app-origin>/fabric-embed-redirect.html` as its SPA redirect URI, then configure its client ID in `rayfin/.env`:
+Create a Real-Time Dashboard using the `wildlifetelemetry` KQL Database. Add a `_animalId` dashboard parameter and apply it to the relevant KQL queries; animal detail views send it to the embed as `param-_animalId`. Register a Microsoft Entra SPA with delegated `Fabric.Embed` plus `Item.Read.All` permissions. Add `<app-origin>/fabric-embed-redirect.html` as its SPA redirect URI, then configure its client ID in `rayfin/.env`:
 
 ```bash
 RAYFIN_PUBLIC_REALTIME_DASHBOARD_CLIENT_ID=<entra-app-client-id>
@@ -169,7 +172,9 @@ npx rayfin up status      # verify endpoint health
 │   │   ├── AppLayout.tsx       # Sidebar + outlet wrapper
 │   │   ├── AppSidebar.tsx      # Navigation, theme toggle, sign out
 │   │   ├── AuthPage.tsx        # Sign-in UI
+│   │   ├── FabricRealtimeDashboard.tsx # Fabric KQL dashboard embed + optional animal filter
 │   │   └── ui/
+│   │       ├── pager.tsx           # Shared table pagination controls
 │   │       └── sortable-head.tsx  # Sortable <TableHead> with chevron indicators
 │   ├── pages/
 │   │   ├── HomePage.tsx              # Summary + Fabric Real-Time Dashboard
@@ -194,12 +199,12 @@ npx rayfin up status      # verify endpoint health
 │       ├── IAuthService.ts
 │       ├── MockAuthService.ts
 │       ├── RayfinAuthService.ts
+│       ├── fabricEmbedAuth.ts   # MSAL token acquisition for Fabric Embed
 │       ├── rayfinClient.ts      # Typed RayfinClient singleton
 │       └── bootstrap.ts         # Env-based auth service selection
-└── src/lib/
-    └── exportCsv.ts             # CSV download utility (UTF-8 BOM, field escaping)
-│       ├── rayfinClient.ts      # Typed RayfinClient singleton
-│       └── bootstrap.ts         # Env-based auth service selection
+│   └── lib/
+│       └── exportCsv.ts         # CSV download utility (UTF-8 BOM, field escaping)
+├── fabric-embed-redirect.html   # MSAL redirect page for embedded Fabric content
 └── data/
     ├── *.csv                    # Sample seed data
     └── scripts/                 # SQL INSERT scripts for seeding the database
@@ -209,10 +214,9 @@ npx rayfin up status      # verify endpoint health
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start local dev server (uses deployed Fabric backend) |
+| `npm run dev` | Start Rayfin services without static hosting, then start Vite |
 | `npm run build` | Production build |
 | `npm run build:fabric` | Build for Fabric static hosting (used by `rayfin up`) |
 | `npm run lint` | Lint with ESLint |
 | `npm run test` | Run unit tests with Vitest |
-| `npm run rayfin:up` | Full deploy: build + static deploy + schema migrations |
 | `npm run rayfin:db` | Apply schema migrations only |

@@ -339,6 +339,7 @@ export function AnimalDetailPage() {
               <>
                 <Card className="overflow-hidden mb-3">
                   <FabricRealtimeDashboard
+                    animalId={animal.animalId}
                     height={440}
                     title={`${animal.animalId} Real-Time Telemetry`}
                   />
