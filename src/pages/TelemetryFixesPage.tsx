@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { FabricRealtimeDashboard } from '@/components/FabricRealtimeDashboard';
+import { PowerBIAnimalTelemetryReport } from '@/components/PowerBIAnimalTelemetryReport';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Download from 'lucide-react/dist/esm/icons/download';
@@ -87,6 +87,10 @@ export function TelemetryFixesPage() {
   );
 
   const animalLabel = (id: string) => animals.find(a => a.id === id)?.animalId ?? id.slice(0, 8);
+  const reportAnimalId = useMemo(() => {
+    const deployment = deployments.find(d => d.id === selectedDeployment);
+    return deployment ? animals.find(a => a.id === deployment.animal_id)?.animalId : undefined;
+  }, [animals, deployments, selectedDeployment]);
 
   const totalMortality = useMemo(() => fixes.filter(f => f.mortalityFlag).length, [fixes]);
 
@@ -208,7 +212,11 @@ export function TelemetryFixesPage() {
             </div>
 
             <Card className="overflow-hidden mb-6">
-              <FabricRealtimeDashboard title="Wildlife Telemetry Live" />
+              {reportAnimalId ? (
+                <PowerBIAnimalTelemetryReport animalId={reportAnimalId} />
+              ) : (
+                <Skeleton className="aspect-video w-full" />
+              )}
             </Card>
 
             {/* Fix log table */}

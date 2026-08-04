@@ -95,7 +95,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 
 ### Telemetry Fixes
 - Filter by animal and collar deployment
-- Embedded Fabric Real-Time Dashboard backed by the telemetry Eventstream and KQL Database
+- Embedded **wildlifetelemetrydetail** Power BI report filtered to the animal associated with the selected deployment
 - **Sortable** fix log table
 - **Export CSV** — downloads all fixes for the selected deployment
 
