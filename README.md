@@ -62,13 +62,11 @@ Open [http://localhost:5173](http://localhost:5173). Local development uses pass
 
 ## Embed configuration
 
-Register a Microsoft Entra SPA and add `<app-origin>/fabric-embed-redirect.html` as a redirect URI. Grant these delegated permissions together:
+Register a Microsoft Entra SPA and add `<app-origin>/fabric-embed-redirect.html` as a redirect URI. Grant these delegated permissions:
 
-- `Fabric.Embed`
-- `KQLDashboard.Read.All`
-- `Workspace.Read.All`
-- `Item.Read.All`
-- `Report.Read.All`
+- **Power BI Service:** `Fabric.Embed`, `KQLDashboard.Read.All`, `Workspace.Read.All`, `Item.Read.All`, and `Report.Read.All`. Consent these scopes together so a later grant does not replace the existing Fabric permissions.
+- **Azure Data Explorer:** `user_impersonation`
+- **Microsoft Graph:** `User.Read`
 
 Configure `rayfin/.env`:
 
