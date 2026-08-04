@@ -13,6 +13,7 @@ import Satellite from 'lucide-react/dist/esm/icons/satellite';
 import ClipboardList from 'lucide-react/dist/esm/icons/clipboard-list';
 import { useTheme } from 'next-themes';
 
+import { WildlifeTrackerLogo } from '@/components/WildlifeTrackerLogo';
 import {
   Sidebar,
   SidebarContent,
@@ -55,9 +56,14 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-2">
-          <PawPrint size={18} className="text-muted-foreground" />
-          <span className="font-bold text-foreground">Wildlife Tracker</span>
+        <div className="flex items-center gap-2.5">
+          <WildlifeTrackerLogo className="size-8" decorative />
+          <div className="min-w-0 leading-tight">
+            <span className="block truncate font-bold text-foreground">Wildlife Tracker</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Field intelligence
+            </span>
+          </div>
         </div>
       </SidebarHeader>
 

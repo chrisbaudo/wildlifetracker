@@ -1,0 +1,17 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <path d="M32 3C16 3 5 14.6 5 29.2c0 18.2 19.8 29.2 27 31.8 7.2-2.6 27-13.6 27-31.8C59 14.6 48 3 32 3Z" fill="#123D35"/>
+  <g fill="none" stroke="#84BDA6" stroke-width="2" stroke-linecap="round" opacity=".55">
+    <path d="M10.2 28.1c5.8-1.2 9.1-4.4 12.4-7.7 4.2-4.2 8.7-8.7 18.4-10.1"/>
+    <path d="M7.9 36.9c8.6-.3 13.6-4.2 18-8.1 4.7-4.2 9-8 18-8.5"/>
+    <path d="M12.4 45.8c7.8-1 12.8-4.2 17.3-7.5 5-3.7 9.6-7 18.6-7.4"/>
+  </g>
+  <path d="M20.1 48.7c3.8-6.4 8.1-8.8 12.7-11.3 4.4-2.4 8.9-4.9 13-10.8" fill="none" stroke="#F6F0D8" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M17.2 20.7c2.5-3.9 6.9-6.5 11.9-6.7-1.6 5-5.8 8.7-11.1 9.7" fill="#D9E66A"/>
+  <path d="M17.8 23.6c2.7-2.4 5.9-4.5 9.5-6.1" fill="none" stroke="#123D35" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="45.8" cy="26.5" r="7.2" fill="#F16F51"/>
+  <circle cx="45.8" cy="26.5" r="2.6" fill="#FFF8E8"/>
+  <g fill="none" stroke="#6ED2CA" stroke-width="2.4" stroke-linecap="round">
+    <path d="M38.5 15.7c2.1-1.7 4.6-2.6 7.3-2.6 2.8 0 5.4 1 7.4 2.7"/>
+    <path d="M36 11.3a15.7 15.7 0 0 1 19.6.2"/>
+  </g>
+</svg>

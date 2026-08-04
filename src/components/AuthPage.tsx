@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { WildlifeTrackerLogo } from '@/components/WildlifeTrackerLogo';
 import { useAuth } from '@/hooks/AuthContext';
 
 const msLogo = (
@@ -42,18 +43,18 @@ export function AuthPage() {
     : 'Sign in with Microsoft';
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Decorative background shapes */}
-      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-blue-100/50 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-indigo-100/40 blur-3xl" />
-
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#edf4ef] bg-[linear-gradient(135deg,rgba(18,61,53,0.08)_1px,transparent_1px)] bg-[size:24px_24px]">
       <div className="relative flex flex-1 items-center justify-center p-4">
         <div className="w-full max-w-sm">
-          <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-xl backdrop-blur-sm">
+          <div className="rounded-lg border border-[#cbd9d0] bg-[#fffdf7]/95 p-8 shadow-[0_18px_50px_rgba(18,61,53,0.14)] backdrop-blur-sm">
             <div className="mb-8 text-center">
-              <h1 className="text-2xl font-bold text-gray-900">Wildlife Tracker</h1>
-              <p className="mt-2 text-sm text-gray-500">
-                Sign in to get started.
+              <WildlifeTrackerLogo className="mx-auto mb-4 size-20 drop-shadow-[0_8px_12px_rgba(18,61,53,0.16)]" />
+              <h1 className="text-2xl font-bold text-[#123d35]">Wildlife Tracker</h1>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[#527168]">
+                Field intelligence
+              </p>
+              <p className="mt-4 text-sm text-[#5d6c66]">
+                Follow every signal. Protect every animal.
               </p>
             </div>
 
@@ -61,14 +62,14 @@ export function AuthPage() {
               type="button"
               onClick={handleSignIn}
               disabled={isLoading}
-              className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-md shadow-blue-600/25 transition-all hover:shadow-lg hover:shadow-blue-600/30 hover:brightness-110 disabled:opacity-50 disabled:shadow-none"
+              className="flex w-full items-center justify-center rounded-md bg-[#123d35] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#123d35]/20 transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#1b574c] hover:shadow-lg hover:shadow-[#123d35]/25 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               {msLogo}
               {buttonLabel}
             </button>
 
             {error && (
-              <p className="mt-3 text-center text-sm text-red-600">{error}</p>
+              <p className="mt-3 text-center text-sm text-[#b84132]">{error}</p>
             )}
           </div>
         </div>

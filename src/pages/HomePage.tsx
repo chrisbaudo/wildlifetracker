@@ -1,6 +1,6 @@
-﻿import { type LucideIcon } from 'lucide-react';
+﻿import { lazy, Suspense } from 'react';
+import { type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Bar, BarChart, XAxis } from 'recharts';
 
 import ActivityIcon from 'lucide-react/dist/esm/icons/activity';
 import CircleCheck from 'lucide-react/dist/esm/icons/circle-check';
@@ -18,8 +18,13 @@ import WifiOff from 'lucide-react/dist/esm/icons/wifi-off';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useDashboard, type DashboardStats } from '@/hooks/useDashboard';
+
+const CapturesByMonthChart = lazy(() =>
+  import('@/components/CapturesByMonthChart').then((module) => ({
+    default: module.CapturesByMonthChart,
+  }))
+);
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -272,16 +277,9 @@ export function HomePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{ count: { label: 'Captures', color: 'hsl(var(--chart-1))' } }}
-              className="h-40 w-full"
-            >
-              <BarChart data={capturesByMonth} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="count" fill="var(--color-count)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
+            <Suspense fallback={<div className="h-40 w-full" aria-hidden="true" />}>
+              <CapturesByMonthChart data={capturesByMonth} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
