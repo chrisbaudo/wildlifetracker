@@ -20,6 +20,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 - **Fabric Eventstream** for real-time telemetry ingestion
 - **Fabric KQL Database** for real-time telemetry storage and analysis
 - **Fabric Real-Time Dashboard** for live animal locations and collar telemetry visualization
+- **Power BI semantic model and report** for animal-specific GPS track visualization
 - **Fabric Static Web Apps** for hosting the React application
 - **Fabric SSO with Microsoft Entra ID** for authentication in the deployed application
 - **Rayfin and Data API Builder** for typed data APIs, schema deployment, and access control
@@ -30,10 +31,10 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Browser (React + shadcn/ui)                                         │
 │  ┌─────────────┐  ┌─────────────────────┐  ┌──────────────────────┐ │
-│  │  Dashboard  │  │  CRUD pages (8)     │  │  Fabric Real-Time    │ │
-│  │  + alerts   │  │  + CSV export       │  │  Dashboard           │ │
-│  └──────┬──────┘  └────────┬────────────┘  └──────────┬───────────┘ │
-│         └─────────────────►│ RayfinClient (typed SDK) │◄────────────┘ │
+│  │  Dashboard  │  │  CRUD pages (8)     │  │ Embedded analytics   │ │
+│  │  + alerts   │  │  + CSV export       │  │ Fabric RTD + Power BI│ │
+│  └──────┬──────┘  └────────┬────────────┘  └──────────────────────┘ │
+│         └─────────────────►│ RayfinClient (typed SDK) │              │
 └─────────────────────────────────────────────────────────────────────┘
                               │ GraphQL / REST
 ┌─────────────────────────────▼─────────────────────────────────────────┐
@@ -61,6 +62,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 | Frontend | React 19 + Vite + TypeScript | SPA with routing, auth guard, and embedded real-time analytics |
 | UI components | shadcn/ui (Radix) + Tailwind CSS | Accessible, themeable component library |
 | Real-time analytics | Fabric Real-Time Dashboard + Eventstream + KQL Database | Live wildlife telemetry visualization |
+| Embedded analytics | Power BI report + JavaScript SDK | Animal-specific telemetry map filtered by `animal_id` |
 | API / auth | Rayfin (Data API Builder) | Auto-generated GraphQL + REST endpoints from TypeScript entity decorators; Fabric SSO in deployed apps and password auth for local development |
 | Database | Microsoft Fabric SQL Database (mssql) | Relational store for all telemetry, capture, and reference data |
 | Hosting | Fabric Static Web Apps (via `rayfin up`) | Zero-config CDN hosting co-located with the data backend |
@@ -87,7 +89,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 ### Animal Detail page (`/animals/:id`)
 - Bio summary cards: species, population, sex, age class, estimated age, enrollment date
 - Collar deployments table with "View track" / "Hide track" buttons
-- Fabric Real-Time Dashboard filtered to the current animal through the dashboard's `_animalId` parameter, alongside the selected deployment's fix count
+- Embedded **wildlifetelemetrydetail** Power BI report filtered to the selected animal through `Query.animal_id`
 - Capture history table with biologist name resolution
 - Edit button opens the animal edit sheet inline
 
@@ -108,6 +110,7 @@ Wildlife biologists and field technicians spend significant time managing GPS co
 - **Collar Deployments** — collar ID, fix interval, deploy/end dates, end reason
 
 ### Shared UX patterns (all tables)
+- **Navigation and theme defaults** — the desktop sidebar opens by default and the initial color mode is light; users can still collapse the menu or select dark mode
 - **Column sorting** — click any column header to sort asc/desc; indicator icons show current state
 - **CSV export** — "Export CSV" button exports the current filtered dataset with human-readable column names; FK IDs are resolved to display names (e.g. species name instead of UUID)
 - **Search filter** — live search across all string fields
@@ -138,14 +141,19 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173). The `dev` script starts the Rayfin backend without static hosting, generates the Vite environment, and then starts Vite. Password authentication is available locally; Fabric SSO is used by the deployed app inside the Fabric portal.
 
-Create a Real-Time Dashboard using the `wildlifetelemetry` KQL Database. Add a `_animalId` dashboard parameter and apply it to the relevant KQL queries; animal detail views send it to the embed as `param-_animalId`. Register a Microsoft Entra SPA with delegated `Fabric.Embed` plus `Item.Read.All` permissions. Add `<app-origin>/fabric-embed-redirect.html` as its SPA redirect URI, then configure its client ID in `rayfin/.env`:
+Create a Real-Time Dashboard using the `wildlifetelemetry` KQL Database and a Power BI report for animal telemetry details. The report must expose `Query.animal_id`, `Query.latitude`, `Query.longitude`, and `Query.fix_datetime_utc`; configure its Azure Maps visual with `animal_id` as the series and `fix_datetime_utc` as the path/point identifier. A 16:9 report page fills the responsive embed without letterboxing or internal scrolling.
+
+Register a Microsoft Entra SPA with delegated `Fabric.Embed`, `KQLDashboard.Read.All`, `Workspace.Read.All`, `Item.Read.All`, and Power BI `Report.Read.All` permissions. Because Fabric and Power BI share the same resource application, grant all five scopes together so a later consent update does not replace the dashboard scopes. Add `<app-origin>/fabric-embed-redirect.html` as its SPA redirect URI, then configure the embeds in `rayfin/.env`:
 
 ```bash
 RAYFIN_PUBLIC_REALTIME_DASHBOARD_CLIENT_ID=<entra-app-client-id>
 RAYFIN_PUBLIC_REALTIME_DASHBOARD_ITEM_ID=<real-time-dashboard-item-id>
+RAYFIN_PUBLIC_POWERBI_TELEMETRY_REPORT_ID=<power-bi-report-id>
+RAYFIN_PUBLIC_POWERBI_TELEMETRY_REPORT_EMBED_URL=<power-bi-report-embed-url>
+RAYFIN_PUBLIC_POWERBI_TELEMETRY_REPORT_URL=<power-bi-browser-url>
 ```
 
-The workspace and tenant IDs are populated by `rayfin up`. The signed-in user must have Viewer or higher access to the dashboard. When embed configuration is incomplete, the app shows a link to the dashboard in Fabric instead of an empty frame.
+The workspace and tenant IDs are populated by `rayfin up`. The signed-in user must have access to both embedded items. When embed configuration is incomplete, the app displays a configuration state instead of an empty frame.
 
 To deploy your own instance:
 
@@ -182,14 +190,15 @@ npx rayfin up status      # verify endpoint health
 │   │   ├── AppLayout.tsx       # Sidebar + outlet wrapper
 │   │   ├── AppSidebar.tsx      # Navigation, theme toggle, sign out
 │   │   ├── AuthPage.tsx        # Sign-in UI
-│   │   ├── FabricRealtimeDashboard.tsx # Fabric KQL dashboard embed + optional animal filter
+│   │   ├── FabricRealtimeDashboard.tsx # Fabric KQL dashboard embed
+│   │   ├── PowerBIAnimalTelemetryReport.tsx # Animal-filtered Power BI report embed
 │   │   └── ui/
 │   │       ├── pager.tsx           # Shared table pagination controls
 │   │       └── sortable-head.tsx  # Sortable <TableHead> with chevron indicators
 │   ├── pages/
 │   │   ├── HomePage.tsx              # Summary + Fabric Real-Time Dashboard
 │   │   ├── AnimalsPage.tsx           # Animal list (CRUD)
-│   │   ├── AnimalDetailPage.tsx      # Animal profile + real-time dashboard + captures
+│   │   ├── AnimalDetailPage.tsx      # Animal profile + filtered Power BI report + captures
 │   │   ├── CapturesPage.tsx
 │   │   ├── CollarDeploymentsPage.tsx
 │   │   ├── CollarModelsPage.tsx
@@ -209,7 +218,7 @@ npx rayfin up status      # verify endpoint health
 │       ├── IAuthService.ts
 │       ├── MockAuthService.ts
 │       ├── RayfinAuthService.ts
-│       ├── fabricEmbedAuth.ts   # MSAL token acquisition for Fabric Embed
+│       ├── fabricEmbedAuth.ts   # MSAL token acquisition for Fabric and Power BI embeds
 │       ├── rayfinClient.ts      # Typed RayfinClient singleton
 │       └── bootstrap.ts         # Env-based auth service selection
 │   └── lib/

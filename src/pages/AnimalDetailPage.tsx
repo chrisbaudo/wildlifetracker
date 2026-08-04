@@ -8,7 +8,7 @@ import Satellite from 'lucide-react/dist/esm/icons/satellite';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FabricRealtimeDashboard } from '@/components/FabricRealtimeDashboard';
+import { PowerBIAnimalTelemetryReport } from '@/components/PowerBIAnimalTelemetryReport';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pager } from '@/components/ui/pager';
@@ -32,9 +32,6 @@ import { getCollarModels, type CollarModelItem } from '@/services/collarModels';
 import { getPersonnel, type PersonnelItem } from '@/services/personnel';
 import { getSpecies, type SpeciesItem } from '@/services/species';
 import { getStudyAreas, type StudyAreaItem } from '@/services/studyAreas';
-import {
-  getTelemetryFixesByDeployment, type TelemetryFixItem,
-} from '@/services/telemetryFixes';
 
 const TRACK_COLORS = [
   '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
@@ -79,8 +76,6 @@ export function AnimalDetailPage() {
 
   // Telemetry
   const [selectedDeployment, setSelectedDeployment] = useState<string | null>(null);
-  const [fixes, setFixes] = useState<TelemetryFixItem[]>([]);
-  const [loadingFixes, setLoadingFixes] = useState(false);
 
   const { page: capPage, setPage: setCapPage, pageItems: capItems, pageCount: capPageCount } =
     usePagination(captures);
@@ -116,23 +111,12 @@ export function AnimalDetailPage() {
 
   useEffect(() => { void fetchAll(); }, [fetchAll]);
 
-  const handleSelectDeployment = useCallback(async (depId: string) => {
+  const handleSelectDeployment = useCallback((depId: string) => {
     if (depId === selectedDeployment) {
       setSelectedDeployment(null);
-      setFixes([]);
       return;
     }
     setSelectedDeployment(depId);
-    setFixes([]);
-    setLoadingFixes(true);
-    try {
-      const data = await getTelemetryFixesByDeployment(depId);
-      setFixes(data);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load telemetry.');
-    } finally {
-      setLoadingFixes(false);
-    }
   }, [selectedDeployment]);
 
   const handleEdit = () => {
@@ -310,7 +294,7 @@ export function AnimalDetailPage() {
                         <TableCell>{dep.fixIntervalHours}h</TableCell>
                         <TableCell className="text-right">
                           <button
-                            onClick={() => void handleSelectDeployment(dep.id)}
+                            onClick={() => handleSelectDeployment(dep.id)}
                             className="px-3 py-1 rounded-full text-xs font-medium border transition-colors"
                             style={{
                               backgroundColor: isSelected ? color : 'transparent',
@@ -333,22 +317,9 @@ export function AnimalDetailPage() {
         {/* Real-time telemetry */}
         {selectedDeployment && (
           <section className="mb-8">
-            {loadingFixes ? (
-              <Skeleton className="w-full h-[440px] rounded-xl" />
-            ) : (
-              <>
-                <Card className="overflow-hidden mb-3">
-                  <FabricRealtimeDashboard
-                    animalId={animal.animalId}
-                    height={440}
-                    title={`${animal.animalId} Real-Time Telemetry`}
-                  />
-                </Card>
-                <div className="flex text-xs text-muted-foreground">
-                  <span className="ml-auto tabular-nums">{fixes.length.toLocaleString()} fixes</span>
-                </div>
-              </>
-            )}
+            <Card className="overflow-hidden mb-3">
+              <PowerBIAnimalTelemetryReport animalId={animal.animalId} />
+            </Card>
           </section>
         )}
 

@@ -4,6 +4,9 @@ interface ImportMetaEnv {
   readonly VITE_RAYFIN_REALTIME_DASHBOARD_CLIENT_ID?: string;
   readonly VITE_RAYFIN_REALTIME_DASHBOARD_ITEM_ID?: string;
   readonly VITE_RAYFIN_REALTIME_DASHBOARD_URL?: string;
+  readonly VITE_RAYFIN_POWERBI_TELEMETRY_REPORT_ID?: string;
+  readonly VITE_RAYFIN_POWERBI_TELEMETRY_REPORT_EMBED_URL?: string;
+  readonly VITE_RAYFIN_POWERBI_TELEMETRY_REPORT_URL?: string;
   readonly VITE_FABRIC_TENANT_ID?: string;
   readonly VITE_FABRIC_WORKSPACE_ID?: string;
 }

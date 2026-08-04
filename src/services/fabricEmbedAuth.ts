@@ -6,6 +6,7 @@ import {
 } from '@azure/msal-browser';
 
 const defaultScopes = ['https://api.fabric.microsoft.com/.default'];
+const powerBIScopes = ['https://analysis.windows.net/powerbi/api/Report.Read.All'];
 
 let msalInstance: PublicClientApplication | null = null;
 let initialization: Promise<void> | null = null;
@@ -60,7 +61,7 @@ export async function getFabricEmbedAccessToken(requestedScopes?: string[]): Pro
 
   let result: AuthenticationResult;
   try {
-    result = await instance.acquireTokenSilent({ account, scopes, forceRefresh: true });
+    result = await instance.acquireTokenSilent({ account, scopes });
   } catch (error) {
     if (!(error instanceof InteractionRequiredAuthError)) throw error;
     result = await instance.acquireTokenPopup({ account, scopes });
@@ -68,4 +69,8 @@ export async function getFabricEmbedAccessToken(requestedScopes?: string[]): Pro
 
   instance.setActiveAccount(result.account);
   return result.accessToken;
+}
+
+export async function getPowerBIAccessToken(): Promise<string> {
+  return getFabricEmbedAccessToken(powerBIScopes);
 }

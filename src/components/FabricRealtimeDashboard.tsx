@@ -17,14 +17,12 @@ const embedManager = new EmbedManager({
 });
 
 interface FabricRealtimeDashboardProps {
-  animalId?: string;
   className?: string;
   height?: number | string;
   title?: string;
 }
 
 export function FabricRealtimeDashboard({
-  animalId,
   className = '',
   height = 520,
   title = 'Wildlife Telemetry Live',
@@ -58,7 +56,6 @@ export function FabricRealtimeDashboard({
           itemId: resolvedItemId,
           itemType: 'KQLDashboard',
           workspaceId: resolvedWorkspaceId,
-          queryParams: animalId ? { 'param-_animalId': animalId } : undefined,
           eventHooks: {
             accessTokenProvider: {
               callback: async ({ scopes }) => ({
@@ -93,7 +90,7 @@ export function FabricRealtimeDashboard({
       disposed = true;
       embedManager.reset(container);
     };
-  }, [animalId, configured, itemId, workspaceId]);
+  }, [configured, itemId, workspaceId]);
 
   if (!configured) {
     return (

@@ -10,7 +10,7 @@ import './main.css';
 const authService = bootstrapAuth();
 
 createRoot(document.getElementById('root')!).render(
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+  <ThemeProvider attribute="class" defaultTheme="light">
     <AuthProvider authService={authService}>
       <App />
     </AuthProvider>
