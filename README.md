@@ -38,6 +38,34 @@ The React application uses the typed Rayfin client to access a Fabric SQL Databa
 - Telemetry page with deployment filters, the same Power BI map, and a fix log
 - Collapsible navigation, light and dark themes, and Fabric SSO
 
+## Screenshots
+
+Screenshots use representative local fixture data. Embedded Fabric dashboards and reports require an authenticated Fabric session to display live content.
+
+| Sign in | Dashboard |
+|---|---|
+| ![Microsoft sign-in page](docs/screenshots/sign-in.png) | ![Wildlife tracking summary dashboard](docs/screenshots/dashboard.png) |
+
+| Animals | Animal detail |
+|---|---|
+| ![Animals management page](docs/screenshots/animals.png) | ![Animal detail and telemetry page](docs/screenshots/animal-detail.png) |
+
+| Captures | Collar deployments |
+|---|---|
+| ![Capture records page](docs/screenshots/captures.png) | ![Collar deployments page](docs/screenshots/collar-deployments.png) |
+
+| Telemetry | Real-Time Dashboard |
+|---|---|
+| ![Telemetry fixes page](docs/screenshots/telemetry.png) | ![Real-Time Dashboard page](docs/screenshots/realtime-dashboard.png) |
+
+| Species | Study areas |
+|---|---|
+| ![Species reference data page](docs/screenshots/species.png) | ![Study areas reference data page](docs/screenshots/study-areas.png) |
+
+| Collar models | Personnel |
+|---|---|
+| ![Collar models reference data page](docs/screenshots/collar-models.png) | ![Personnel reference data page](docs/screenshots/personnel.png) |
+
 ## Data model
 
 | Entity | Purpose |
