@@ -13,7 +13,6 @@ import Satellite from 'lucide-react/dist/esm/icons/satellite';
 import ClipboardList from 'lucide-react/dist/esm/icons/clipboard-list';
 import { useTheme } from 'next-themes';
 
-import { WildlifeTrackerLogo } from '@/components/WildlifeTrackerLogo';
 import {
   Sidebar,
   SidebarContent,
@@ -47,23 +46,20 @@ const FIELD_ITEMS = [
   { label: 'Telemetry', href: '/telemetry', icon: Navigation },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { theme, setTheme } = useTheme();
 
   return (
-    <Sidebar>
+    <Sidebar className={className}>
       <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-2.5">
-          <WildlifeTrackerLogo className="size-8" decorative />
-          <div className="min-w-0 leading-tight">
-            <span className="block truncate font-bold text-foreground">Wildlife Tracker</span>
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Field intelligence
-            </span>
-          </div>
+        <div className="min-w-0 leading-tight">
+          <span className="block truncate font-bold text-foreground">Wildlife Tracker</span>
+          <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Field intelligence
+          </span>
         </div>
       </SidebarHeader>
 

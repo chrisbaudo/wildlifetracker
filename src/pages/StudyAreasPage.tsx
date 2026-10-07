@@ -135,8 +135,7 @@ export function StudyAreasPage() {
             <SheetHeader>
               <SheetTitle>{editingId ? 'Edit Study Area' : 'Add Study Area'}</SheetTitle>
             </SheetHeader>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={(e) => void handleSubmit(e)}             className="space-y-4 mt-4 px-4 pb-4">              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Population</Label>
                   <Input required placeholder="e.g. Western Arctic Herd" value={form.population}

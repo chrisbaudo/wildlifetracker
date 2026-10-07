@@ -177,8 +177,7 @@ export function CapturesPage() {
             <SheetHeader>
               <SheetTitle>{editingId ? 'Edit Capture' : 'Log Capture'}</SheetTitle>
             </SheetHeader>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6 mt-4">
-              {/* Identity & Location */}
+            <form onSubmit={(e) => void handleSubmit(e)}             className="space-y-6 mt-4 px-4 pb-4">              {/* Identity & Location */}
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Identity &amp; Location</p>
                 <div className="grid grid-cols-2 gap-4">

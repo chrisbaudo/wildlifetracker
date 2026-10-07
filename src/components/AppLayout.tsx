@@ -1,5 +1,4 @@
 import { AppSidebar } from '@/components/AppSidebar';
-import { WildlifeTrackerLogo } from '@/components/WildlifeTrackerLogo';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +21,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="relative flex min-w-0 items-center gap-3">
             <SidebarTrigger className="-ml-1 text-white hover:bg-white/10 hover:text-white" />
             <div className="h-9 w-px bg-white/20" aria-hidden="true" />
-            <WildlifeTrackerLogo className="size-10" decorative />
             <div className="min-w-0">
               <p className="truncate text-lg font-bold leading-tight sm:text-xl">Wildlife Tracker</p>
               <p className="truncate text-xs text-[#b9d8cc] sm:text-sm">
