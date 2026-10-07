@@ -113,8 +113,7 @@ export function PersonnelPage() {
             <SheetHeader>
               <SheetTitle>{editingId ? 'Edit Person' : 'Add Person'}</SheetTitle>
             </SheetHeader>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-6">
-              <div className="grid grid-cols-1 gap-4">
+            <form onSubmit={(e) => void handleSubmit(e)}             className="space-y-4 mt-6 px-4 pb-4">              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <Label>Name</Label>
                   <Input required placeholder="e.g. S. Wren" value={form.name}

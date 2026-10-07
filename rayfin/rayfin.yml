@@ -11,6 +11,8 @@ services:
     allowedRedirectUris:
       - http://localhost:5173
       - https://snowy-wren-b7eae0367b-northcentralus.webapp.fabricapps.net
+      - http://127.0.0.1:5173
+      - https://thick-echo-7973686703-westus.webapp.fabricapps.net
   data:
     enabled: true
     dialect: mssql
@@ -19,6 +21,7 @@ services:
     folder: dist
     buildCommand: npm run build:fabric
     indexDocument: index.html
+    assetAccess: protected
   storage:
     enabled: false
   functions:

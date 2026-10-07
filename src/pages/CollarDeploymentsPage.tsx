@@ -172,7 +172,7 @@ export function CollarDeploymentsPage() {
             <SheetHeader>
               <SheetTitle>{editingId ? 'Edit Deployment' : 'Add Deployment'}</SheetTitle>
             </SheetHeader>
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4 px-4 pb-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Collar ID</Label>

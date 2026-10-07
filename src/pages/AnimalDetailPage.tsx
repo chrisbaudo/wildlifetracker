@@ -371,8 +371,7 @@ export function AnimalDetailPage() {
           <SheetHeader>
             <SheetTitle>Edit Animal</SheetTitle>
           </SheetHeader>
-          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e) => void handleSubmit(e)}           className="space-y-4 mt-4 px-4 pb-4">            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Animal ID</Label>
                 <Input required placeholder="e.g. CAR-001" value={form.animalId}
