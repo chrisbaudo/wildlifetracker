@@ -6,7 +6,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen>
       <AppSidebar />
       <SidebarInset>
-        <header className="relative isolate flex h-24 shrink-0 items-center overflow-hidden border-b border-[#0b2d27] bg-[#123d35] px-4 text-white sm:px-6">
+        <header className="relative isolate flex h-20 shrink-0 items-center overflow-hidden border-b border-[#0b2d27] bg-gradient-to-r from-[#123d35] via-[#17483c] to-[#123d35] px-4 text-white sm:px-6">
           <div
             className="pointer-events-none absolute inset-0 opacity-20"
             aria-hidden="true"
