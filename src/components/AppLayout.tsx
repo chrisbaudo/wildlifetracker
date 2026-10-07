@@ -7,7 +7,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen>
       <AppSidebar />
       <SidebarInset>
-        <header className="relative isolate flex h-24 shrink-0 items-center overflow-hidden border-b border-[#0b2d27] bg-[#123d35] px-4 text-white sm:px-6">
+        <header className="relative isolate flex h-20 shrink-0 items-center overflow-hidden border-b border-[#0b2d27] bg-gradient-to-r from-[#123d35] via-[#17483c] to-[#123d35] px-4 text-white sm:px-6">
           <div
             className="pointer-events-none absolute inset-0 opacity-20"
             aria-hidden="true"
@@ -22,7 +22,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="relative flex min-w-0 items-center gap-3">
             <SidebarTrigger className="-ml-1 text-white hover:bg-white/10 hover:text-white" />
             <div className="h-9 w-px bg-white/20" aria-hidden="true" />
-            <WildlifeTrackerLogo className="size-12" decorative />
+            <WildlifeTrackerLogo className="size-10" decorative />
             <div className="min-w-0">
               <p className="truncate text-lg font-bold leading-tight sm:text-xl">Wildlife Tracker</p>
               <p className="truncate text-xs text-[#b9d8cc] sm:text-sm">
